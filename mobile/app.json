@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "FiltroLlamadas",
+    "slug": "filtro-llamadas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0F0F23"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.filtrollamadas.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F0F23"
+      },
+      "package": "com.filtrollamadas.app"
+    }
+  }
+}

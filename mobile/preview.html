@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiltroLlamadas - App Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+  .phone-frame {
+    width: 390px; height: 844px; background: #0F0F23; border-radius: 44px; overflow: hidden;
+    border: 3px solid #333; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .notch { width: 160px; height: 30px; background: #000; border-radius: 0 0 20px 20px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+  .screen { height: 100%; overflow-y: auto; padding-bottom: 90px; }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* Tab Bar */
+  .tab-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 85px; background: #0F0F23;
+    border-top: 0.5px solid #2A2A4A; display: flex; justify-content: space-around;
+    align-items: flex-start; padding-top: 10px; z-index: 10;
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .tab svg { width: 22px; height: 22px; }
+  .tab span { font-size: 11px; font-weight: 600; }
+  .tab.active svg { fill: #6C63FF; color: #6C63FF; }
+  .tab.active span { color: #6C63FF; }
+  .tab:not(.active) svg { fill: #6B6B8D; color: #6B6B8D; }
+  .tab:not(.active) span { color: #6B6B8D; }
+
+  /* Header */
+  .header { padding: 55px 24px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .greeting { font-size: 22px; font-weight: 700; color: #FFF; }
+  .subtitle { font-size: 13px; color: #B0B0D0; margin-top: 2px; }
+  .status-pill { display: flex; align-items: center; gap: 6px; background: #1A1A2E; padding: 6px 12px; border-radius: 999px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #00E676; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .status-text { font-size: 11px; color: #B0B0D0; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; margin-bottom: 16px; }
+  .stat-card { background: #1A1A2E; border-radius: 16px; padding: 16px; }
+  .stat-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; font-size: 18px; }
+  .stat-value { font-size: 28px; font-weight: 800; color: #FFF; }
+  .stat-label { font-size: 11px; color: #B0B0D0; margin-top: 2px; }
+
+  /* Section */
+  .section { padding: 0 24px; margin-top: 24px; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; }
+  .section-title { font-size: 18px; font-weight: 700; color: #FFF; margin-bottom: 12px; }
+  .see-all { font-size: 13px; color: #6C63FF; cursor: pointer; }
+
+  /* Bar Chart */
+  .bar-row { display: flex; align-items: center; margin-bottom: 10px; }
+  .bar-label { display: flex; align-items: center; width: 90px; gap: 6px; }
+  .bar-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .bar-text { font-size: 13px; color: #B0B0D0; }
+  .bar-track { flex: 1; height: 8px; background: #25254A; border-radius: 4px; margin: 0 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .bar-count { font-size: 13px; font-weight: 600; color: #FFF; width: 28px; text-align: right; }
+
+  /* Call Card */
+  .call-card {
+    background: #1A1A2E; border-radius: 12px; padding: 16px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; cursor: pointer; transition: transform 0.15s;
+  }
+  .call-card:hover { transform: scale(0.98); }
+  .call-left { display: flex; gap: 12px; flex: 1; }
+  .call-avatar { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .call-name { font-size: 15px; font-weight: 600; color: #FFF; }
+  .call-summary { font-size: 13px; color: #B0B0D0; margin-top: 2px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .call-right { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; margin-left: 12px; }
+  .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .call-time { font-size: 11px; color: #6B6B8D; margin-top: 4px; }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Historial filters */
+  .filter-row { display: flex; gap: 8px; padding: 0 24px; margin-bottom: 8px; overflow-x: auto; }
+  .filter-chip { padding: 6px 14px; border-radius: 999px; background: #1A1A2E; font-size: 13px; color: #B0B0D0; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+  .filter-chip.active { background: #6C63FF; color: #FFF; font-weight: 600; }
+
+  /* Config */
+  .config-card { background: #1A1A2E; border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+  .config-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 0.5px solid #2A2A4A; }
+  .config-left { display: flex; align-items: center; gap: 12px; }
+  .config-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(108,99,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .config-label { font-size: 15px; font-weight: 500; color: #FFF; }
+  .config-desc { font-size: 11px; color: #6B6B8D; margin-top: 2px; }
+  .toggle { width: 44px; height: 26px; border-radius: 13px; background: #25254A; position: relative; cursor: pointer; transition: background 0.3s; }
+  .toggle.on { background: rgba(108,99,255,0.6); }
+  .toggle::after { content: ''; width: 22px; height: 22px; border-radius: 50%; background: #6B6B8D; position: absolute; top: 2px; left: 2px; transition: all 0.3s; }
+  .toggle.on::after { left: 20px; background: #6C63FF; }
+  .section-label { font-size: 12px; font-weight: 600; color: #6B6B8D; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding: 0 24px; margin-top: 24px; }
+
+  /* Status banner */
+  .status-banner { display: flex; justify-content: space-between; align-items: center; background: #1A1A2E; margin: 0 24px 12px; border-radius: 16px; padding: 12px 16px; }
+  .status-active { display: flex; align-items: center; gap: 8px; }
+  .status-active-text { font-size: 15px; font-weight: 600; color: #00E676; }
+  .status-version { font-size: 11px; color: #6B6B8D; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="notch"></div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="screen">
+    <div id="page-dashboard" class="page active">
+      <div class="header">
+        <div>
+          <div class="greeting">Hola, Juan Sebastián</div>
+          <div class="subtitle">Sofía está filtrando tus llamadas</div>
+        </div>
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          <span class="status-text">Activo</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(108,99,255,0.2)">📞</div>
+          <div class="stat-value">47</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(0,217,255,0.2)">📅</div>
+          <div class="stat-value">5</div>
+          <div class="stat-label">Hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,82,82,0.2)">🛡️</div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">Spam bloqueado</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(0,230,118,0.2)">⭐</div>
+          <div class="stat-value">28</div>
+          <div class="stat-label">Importantes</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Distribución</div>
+        <div class="bar-row">
+          <div class="bar-label"><div class="bar-dot" style="background:#6C63FF"></div><span class="bar-text">Personal</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:32%;background:#6C63FF"></div></div>
+          <span class="bar-count">15</span>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><div class="bar-dot" style="background:#00D9FF"></div><span class="bar-text">Trabajo</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:38%;background:#00D9FF"></div></div>
+          <span class="bar-count">18</span>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><div class="bar-dot" style="background:#FFD740"></div><span class="bar-text">Trámite</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:17%;background:#FFD740"></div></div>
+          <span class="bar-count">8</span>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><div class="bar-dot" style="background:#FF5252"></div><span class="bar-text">Marketing</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:13%;background:#FF5252"></div></div>
+          <span class="bar-count">6</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Últimas llamadas</div>
+          <span class="see-all" onclick="showPage('historial')">Ver todo</span>
+        </div>
+
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(0,217,255,0.2)">💼</div>
+            <div>
+              <div class="call-name">Carolina Méndez</div>
+              <div class="call-summary">Cliente pidió reunión urgente para revisar avance del sprint.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(255,82,82,0.2);color:#FF5252">Alta</span>
+            <span class="call-time">10:32</span>
+          </div>
+        </div>
+
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(108,99,255,0.2)">👤</div>
+            <div>
+              <div class="call-name">Mamá</div>
+              <div class="call-summary">Confirmó almuerzo del domingo a la 1pm.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(255,215,64,0.2);color:#FFD740">Media</span>
+            <span class="call-time">09:15</span>
+          </div>
+        </div>
+
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(255,82,82,0.15)">📢</div>
+            <div>
+              <div class="call-name">+56 9 0000 0000</div>
+              <div class="call-summary">Telemarketing plan de internet. Sofía lo despachó.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(0,230,118,0.2);color:#00E676">Baja</span>
+            <span class="call-time">08:45</span>
+          </div>
+        </div>
+
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(255,215,64,0.2)">📋</div>
+            <div>
+              <div class="call-name">Isapre Cruz Blanca</div>
+              <div class="call-summary">Documentación pendiente. Plazo hasta el viernes.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(255,82,82,0.2);color:#FF5252">Alta</span>
+            <span class="call-time">07:20</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:40px"></div>
+    </div>
+
+    <!-- ═══ HISTORIAL ═══ -->
+    <div id="page-historial" class="page">
+      <div class="header">
+        <div class="greeting">Historial</div>
+        <span class="subtitle" style="color:#6B6B8D">47 llamadas</span>
+      </div>
+      <div class="filter-row">
+        <span class="filter-chip active">Todas</span>
+        <span class="filter-chip">Personal</span>
+        <span class="filter-chip">Trabajo</span>
+        <span class="filter-chip">Trámite</span>
+        <span class="filter-chip">Marketing</span>
+      </div>
+      <div class="filter-row">
+        <span class="filter-chip active">Todas</span>
+        <span class="filter-chip">🔴 Alta</span>
+        <span class="filter-chip">🟡 Media</span>
+        <span class="filter-chip">🟢 Baja</span>
+      </div>
+      <div style="padding:0 24px;margin-top:8px">
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(0,217,255,0.2)">💼</div>
+            <div>
+              <div class="call-name">Carolina Méndez</div>
+              <div class="call-summary">Cliente pidió reunión urgente para revisar avance del sprint.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(0,217,255,0.2);color:#00D9FF">Trabajo</span>
+            <span class="badge" style="background:rgba(255,82,82,0.2);color:#FF5252;margin-top:4px">Alta</span>
+          </div>
+        </div>
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(108,99,255,0.2)">👤</div>
+            <div>
+              <div class="call-name">Mamá</div>
+              <div class="call-summary">Confirmó almuerzo del domingo a la 1pm en su casa.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(108,99,255,0.2);color:#6C63FF">Personal</span>
+            <span class="badge" style="background:rgba(255,215,64,0.2);color:#FFD740;margin-top:4px">Media</span>
+          </div>
+        </div>
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(255,82,82,0.15)">📢</div>
+            <div>
+              <div class="call-name">+56 9 0000 0000</div>
+              <div class="call-summary">Telemarketing plan de internet. Despachado por Sofía.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(255,82,82,0.2);color:#FF5252">Marketing</span>
+            <span class="badge" style="background:rgba(0,230,118,0.2);color:#00E676;margin-top:4px">Baja</span>
+          </div>
+        </div>
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(255,215,64,0.2)">📋</div>
+            <div>
+              <div class="call-name">Isapre Cruz Blanca</div>
+              <div class="call-summary">Documentación pendiente para reembolso. Plazo viernes.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(255,215,64,0.2);color:#FFD740">Trámite</span>
+            <span class="badge" style="background:rgba(255,82,82,0.2);color:#FF5252;margin-top:4px">Alta</span>
+          </div>
+        </div>
+        <div class="call-card">
+          <div class="call-left">
+            <div class="call-avatar" style="background:rgba(0,217,255,0.2)">💼</div>
+            <div>
+              <div class="call-name">Pedro Soto</div>
+              <div class="call-summary">Colega preguntó por el informe mensual de métricas.</div>
+            </div>
+          </div>
+          <div class="call-right">
+            <span class="badge" style="background:rgba(0,217,255,0.2);color:#00D9FF">Trabajo</span>
+            <span class="badge" style="background:rgba(255,215,64,0.2);color:#FFD740;margin-top:4px">Media</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:40px"></div>
+    </div>
+
+    <!-- ═══ CONFIG ═══ -->
+    <div id="page-config" class="page">
+      <div class="header">
+        <div class="greeting">Configuración</div>
+      </div>
+
+      <div class="status-banner">
+        <div class="status-active">
+          <div class="status-dot"></div>
+          <span class="status-active-text">Sistema activo</span>
+        </div>
+        <span class="status-version">v1.0.0</span>
+      </div>
+
+      <div class="section-label">Notificaciones</div>
+      <div style="padding:0 24px">
+        <div class="config-card">
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">💬</div>
+              <div><div class="config-label">WhatsApp</div><div class="config-desc">Resumen al finalizar cada llamada</div></div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">🔔</div>
+              <div><div class="config-label">Push notifications</div><div class="config-desc">Alertas de llamadas importantes</div></div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Filtrado</div>
+      <div style="padding:0 24px">
+        <div class="config-card">
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">🛡️</div>
+              <div><div class="config-label">Bloquear spam</div><div class="config-desc">Sofía termina llamadas de marketing</div></div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">🌙</div>
+              <div><div class="config-label">Modo nocturno</div><div class="config-desc">No molestar entre 23:00 y 07:00</div></div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Asistente</div>
+      <div style="padding:0 24px">
+        <div class="config-card">
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">💬</div>
+              <div><div class="config-label">Saludo personalizado</div><div class="config-desc">Editar lo que dice Sofía</div></div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">🎙️</div>
+              <div><div class="config-label">Grabar llamadas</div><div class="config-desc">Audio completo de cada llamada</div></div>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Cuenta</div>
+      <div style="padding:0 24px">
+        <div class="config-card">
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">👤</div>
+              <div><div class="config-label">Perfil</div><div class="config-desc">Juan Sebastián</div></div>
+            </div>
+            <span style="color:#6B6B8D">›</span>
+          </div>
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">📞</div>
+              <div><div class="config-label">Número Twilio</div><div class="config-desc">+1 (415) 523-8886</div></div>
+            </div>
+            <span style="color:#6B6B8D">›</span>
+          </div>
+          <div class="config-row">
+            <div class="config-left">
+              <div class="config-icon">🔑</div>
+              <div><div class="config-label">API Keys</div><div class="config-desc">Gestionar claves</div></div>
+            </div>
+            <span style="color:#6B6B8D">›</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:40px"></div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab active" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z"/></svg>
+      <span>Inicio</span>
+    </div>
+    <div class="tab" onclick="showPage('historial')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg>
+      <span>Historial</span>
+    </div>
+    <div class="tab" onclick="showPage('config')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Ajustes</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.querySelector('.screen').scrollTop = 0;
+}
+
+// Filter chip interactivity
+document.querySelectorAll('.filter-row').forEach(row => {
+  row.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      row.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+});
+</script>
+</body>
+</html>

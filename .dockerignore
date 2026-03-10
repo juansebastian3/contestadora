@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+venv/
+.venv/
+mobile/
+*.db
+audio_cache/
+audio_uploads/
+node_modules/
+ROADMAP.md
+*.md

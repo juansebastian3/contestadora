@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Entorno
+.env
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Audio cache (generado en runtime)
+audio_cache/
+audio_uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Mobile (se maneja por separado)
+mobile/node_modules/
+mobile/.expo/
