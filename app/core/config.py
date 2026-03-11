@@ -47,6 +47,14 @@ class Settings:
     # URL pública del servidor (para generar URLs de audio, etc.)
     BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
 
+    # Google Calendar OAuth2 (para integración Pro/Premium)
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+    # Microsoft Outlook/365 Calendar OAuth2 (para integración Pro/Premium)
+    OUTLOOK_CLIENT_ID: str = os.getenv("OUTLOOK_CLIENT_ID", "")
+    OUTLOOK_CLIENT_SECRET: str = os.getenv("OUTLOOK_CLIENT_SECRET", "")
+
     # Nombre del asistente (legacy, ahora es por usuario)
     ASSISTANT_NAME: str = "Sofía"
     OWNER_NAME: str = "Juan Sebastián"

@@ -21,6 +21,14 @@ LÓGICA DE HORARIO LUNA:
   seleccionado sea "desconocidos". Esto permite:
   - De día: solo filtrar desconocidos
   - De noche: filtrar todo automáticamente
+
+INTEGRACIÓN CALENDARIO (Pro/Premium):
+─────────────────────────────────────────────────────────────────
+  Si el usuario tiene un calendario conectado y activado:
+  - Revisa Google Calendar y/o Outlook Calendar
+  - Si hay una reunión activa → activa la contestadora automáticamente
+  - El modo calendario se combina con luna y desconocidos
+  Prioridad: bloqueado > calendario > luna horario > modo base
 """
 import logging
 from datetime import datetime, timezone, timedelta
@@ -43,12 +51,14 @@ class ResultadoFiltrado:
         modo_activo: str,
         numero_conocido: bool = False,
         numero_bloqueado: bool = False,
+        evento_calendario: dict = None,
     ):
         self.debe_filtrar = debe_filtrar
         self.motivo = motivo
         self.modo_activo = modo_activo
         self.numero_conocido = numero_conocido
         self.numero_bloqueado = numero_bloqueado
+        self.evento_calendario = evento_calendario
 
 
 def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
@@ -88,10 +98,15 @@ def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
         for c in contactos
     )
 
-    # 3. Determinar modo activo (incluyendo horario luna)
-    modo = _obtener_modo_activo(usuario)
+    # 3. ¿Está en reunión según calendario? (Pro/Premium)
+    evento_calendario = None
+    if usuario.plan in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+        evento_calendario = _verificar_calendario(usuario)
 
-    # 4. Aplicar lógica según modo
+    # 4. Determinar modo activo (incluyendo horario luna y calendario)
+    modo = _obtener_modo_activo(usuario, evento_calendario)
+
+    # 5. Aplicar lógica según modo
     if modo == ModoFiltrado.DESACTIVADO.value:
         return ResultadoFiltrado(
             debe_filtrar=False,
@@ -106,11 +121,15 @@ def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
             # Fallback a modo desconocidos si no tiene plan
             modo = ModoFiltrado.DESCONOCIDOS.value
         else:
+            motivo = "Modo Luna activo: filtrando todas las llamadas"
+            if evento_calendario:
+                motivo = f"En reunión '{evento_calendario['titulo']}' → contestadora activa"
             return ResultadoFiltrado(
                 debe_filtrar=True,
-                motivo="Modo Luna activo: filtrando todas las llamadas",
+                motivo=motivo,
                 modo_activo=modo,
                 numero_conocido=es_conocido,
+                evento_calendario=evento_calendario,
             )
 
     if modo == ModoFiltrado.DESCONOCIDOS.value:
@@ -137,11 +156,23 @@ def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
     )
 
 
-def _obtener_modo_activo(usuario: Usuario) -> str:
-    """Determina el modo de filtrado activo considerando horarios.
+def _verificar_calendario(usuario: Usuario) -> dict | None:
+    """Revisa si el usuario tiene una reunión activa en sus calendarios conectados."""
+    try:
+        from app.services.calendario_service import usuario_en_reunion
+        return usuario_en_reunion(usuario)
+    except Exception as e:
+        logger.error(f"Error verificando calendario: {e}")
+        return None
 
-    Si el usuario tiene horario luna configurado y estamos dentro de ese rango,
-    se activa luna automáticamente aunque el modo base sea "desconocidos".
+
+def _obtener_modo_activo(usuario: Usuario, evento_calendario: dict = None) -> str:
+    """Determina el modo de filtrado activo considerando horarios y calendario.
+
+    Prioridad:
+    1. Si está en reunión (calendario) → modo luna (contestadora atiende todo)
+    2. Si está en horario luna → modo luna
+    3. Modo base del usuario
     """
     modo_base = usuario.modo_filtrado or ModoFiltrado.DESCONOCIDOS.value
 
@@ -152,6 +183,11 @@ def _obtener_modo_activo(usuario: Usuario) -> str:
     # Si está desactivado, respetar
     if modo_base == ModoFiltrado.DESACTIVADO.value:
         return modo_base
+
+    # ¿Está en reunión según calendario? → Activar luna automático
+    if evento_calendario:
+        logger.info(f"📅 Calendario activa contestadora para {usuario.nombre}")
+        return ModoFiltrado.LUNA.value
 
     # Verificar horario automático de luna
     if usuario.horario_luna_inicio and usuario.horario_luna_fin:

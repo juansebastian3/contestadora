@@ -333,6 +333,30 @@ const api = {
     return response.json();
   },
 
+  // ═══ CALENDARIO (Pro/Premium) ═══
+
+  // Obtener URL de autorización Google Calendar
+  getGoogleAuthUrl: () => api.get("/api/v1/calendario/google/auth-url"),
+
+  // Enviar authorization code de Google al backend
+  conectarGoogleCalendar: (code, redirectUri) =>
+    api.post("/api/v1/calendario/google/conectar", { code, redirect_uri: redirectUri }),
+
+  // Desconectar Google Calendar
+  desconectarGoogleCalendar: () => api.delete("/api/v1/calendario/google"),
+
+  // Desconectar Outlook Calendar
+  desconectarOutlookCalendar: () => api.delete("/api/v1/calendario/outlook"),
+
+  // Estado de calendarios conectados + evento actual
+  getCalendarioEstado: () => api.get("/api/v1/calendario/estado"),
+
+  // Configurar modo calendario (auto_activar, modo)
+  configurarCalendario: (config) => api.post("/api/v1/calendario/config", config),
+
+  // Tips para grabar saludo
+  getTipsSaludo: () => api.get("/api/v1/tips/saludo"),
+
   // Health (público)
   health: () => api.get("/api/v1/health"),
 };

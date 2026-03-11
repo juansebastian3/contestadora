@@ -59,39 +59,56 @@ def _get_voice_params(usuario: Usuario | None) -> dict:
     return {"language": "es-CL", "voice": "Polly.Mia"}
 
 
-def _construir_saludo_ia(usuario: Usuario | None) -> str:
-    """Construye el saludo basado en el prompt personalizado o el default."""
+def _construir_saludo_ia(usuario: Usuario | None, evento_calendario: dict = None) -> str:
+    """Construye el saludo tipo contestadora."""
     nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
 
-    if usuario and usuario.prompt_personalizado:
-        # El prompt del usuario puede contener instrucciones para el saludo.
-        # Lo usamos como contexto, pero generamos un saludo coherente.
+    if evento_calendario:
         return (
             f"Hola, soy {nombre_asistente}, asistente de {nombre_owner}. "
-            "¿Con quién hablo y cuál es la razón de tu llamada?"
+            f"En este momento {nombre_owner} está en una reunión y no puede contestar. "
+            "¿Con quién hablo y cuál es el motivo de tu llamada? "
+            "Apenas termine le paso tu mensaje."
         )
 
     return (
         f"Hola, soy {nombre_asistente}, asistente de {nombre_owner}. "
-        "¿Con quién hablo y cuál es la razón de esta llamada?"
+        f"En este momento {nombre_owner} no puede atender. "
+        "¿Con quién hablo y cuál es el motivo de tu llamada? "
+        "Le haré llegar tu mensaje."
     )
 
 
-def _construir_system_prompt(usuario: Usuario | None) -> str:
-    """Construye el system prompt del LLM usando el prompt personalizado."""
+def _construir_system_prompt(usuario: Usuario | None, evento_calendario: dict = None) -> str:
+    """Construye el system prompt del LLM: contestadora que toma recados."""
     nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
 
     base = (
-        f"Eres {nombre_asistente}, asistente virtual de {nombre_owner} en Chile. "
-        "Sé amable, breve y profesional con tono local. "
-        "Identifica si la llamada es importante o spam. "
-        "Responde en español chileno, máximo 2-3 oraciones."
+        f"Eres {nombre_asistente}, la asistente telefónica de {nombre_owner}.\n\n"
+        "TU OBJETIVO: Que el llamante DEJE UN RECADO completo. Eres una contestadora inteligente.\n\n"
+        "REGLAS CRÍTICAS:\n"
+        f"- NUNCA digas 'contacta a {nombre_owner} directamente' ni 'intenta llamarlo' — ESO ES LO QUE YA ESTÁN HACIENDO.\n"
+        "- NUNCA digas 'no tengo información sobre su agenda' — no la necesitas, solo toma el recado.\n"
+        "- Tu trabajo es: escuchar el motivo, confirmar que entendiste, y despedirte.\n"
+        "- Si es spam/marketing: 'Gracias, pero no le interesa. Que le vaya bien.'\n"
+        f"- Si es importante: 'Perfecto, le aviso a {nombre_owner} que llamaste por [motivo]. ¿Algo más?'\n"
+        f"- Despedida: '{nombre_owner} va a recibir tu mensaje. ¡Que te vaya bien!'\n"
+        "- Máximo 2-3 oraciones por respuesta. Tono chileno cercano y profesional."
     )
 
+    # Contexto de calendario: si está en reunión, la IA lo sabe
+    if evento_calendario:
+        titulo_evento = evento_calendario.get("titulo", "una reunión")
+        base += (
+            f"\n\nCONTEXTO ACTUAL: {nombre_owner} está en '{titulo_evento}' y no puede contestar. "
+            f"Puedes mencionar que está en una reunión (sin dar detalles del evento). "
+            f"Ejemplo: '{nombre_owner} está en una reunión en este momento, pero apenas termine le paso tu mensaje.'"
+        )
+
     if usuario and usuario.prompt_personalizado:
-        base += f"\n\nINSTRUCCIONES DEL DUEÑO:\n{usuario.prompt_personalizado}"
+        base += f"\n\nINSTRUCCIONES ADICIONALES DEL DUEÑO:\n{usuario.prompt_personalizado}"
 
     return base
 
@@ -118,12 +135,14 @@ async def contestar_llamada(request: Request):
     debe_filtrar = True
     modo_activo = "desconocidos"
     numero_conocido = False
+    evento_calendario = None
 
     if usuario:
         resultado = decidir_filtrado(usuario, numero_origen)
         debe_filtrar = resultado.debe_filtrar
         modo_activo = resultado.modo_activo
         numero_conocido = resultado.numero_conocido
+        evento_calendario = resultado.evento_calendario
         logger.info(f"🔍 Filtrado: {resultado.motivo}")
 
         if not debe_filtrar:
@@ -163,23 +182,23 @@ async def contestar_llamada(request: Request):
     logger.info(f"🤖 Modo asistente: {modo_asistente}")
 
     if modo_asistente == ModoAsistente.CONTESTADORA.value:
-        return _responder_modo_contestadora(usuario, base_url)
+        return _responder_modo_contestadora(usuario, base_url, evento_calendario)
     elif modo_asistente == ModoAsistente.HIBRIDO.value:
-        return _responder_modo_hibrido(usuario, base_url)
+        return _responder_modo_hibrido(usuario, base_url, evento_calendario)
     else:
-        return _responder_modo_ia(usuario, base_url)
+        return _responder_modo_ia(usuario, base_url, evento_calendario)
 
 
 # ═══════════════════════════════════════════════════════════
 # MODO 1: IA CONVERSACIONAL (default)
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_ia(usuario: Usuario | None, base_url: str) -> Response:
+def _responder_modo_ia(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
     """La IA saluda y conversa con el llamante."""
     respuesta = VoiceResponse()
     respuesta.pause(length=1)
 
-    saludo = _construir_saludo_ia(usuario)
+    saludo = _construir_saludo_ia(usuario, evento_calendario)
     voice_params = _get_voice_params(usuario)
 
     gather = Gather(
@@ -205,7 +224,7 @@ def _responder_modo_ia(usuario: Usuario | None, base_url: str) -> Response:
 # MODO 2: CONTESTADORA (audio grabado + IA solo escucha)
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_contestadora(usuario: Usuario | None, base_url: str) -> Response:
+def _responder_modo_contestadora(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
     """Reproduce el audio grabado del usuario. La IA NO habla, solo escucha.
 
     Flujo:
@@ -219,20 +238,26 @@ def _responder_modo_contestadora(usuario: Usuario | None, base_url: str) -> Resp
     respuesta.pause(length=1)
 
     if usuario and usuario.audio_saludo_url:
-        # Reproducir el audio grabado del usuario
+        # Reproducir el audio grabado del usuario (su voz real → genera confianza)
         audio_url = f"{base_url}{usuario.audio_saludo_url}"
         respuesta.play(audio_url)
     else:
-        # Fallback: generar saludo genérico tipo contestadora
+        # Fallback: generar saludo personalizado con TTS
         nombre = (usuario.nombre if usuario else None) or settings.OWNER_NAME
         voice_params = _get_voice_params(usuario)
-        respuesta.say(
-            f"Hola, te comunicas con {nombre}. "
-            "No puedo atender en este momento. "
-            "Por favor, deja tu nombre, el motivo de tu llamada "
-            "y te devolveré el llamado. Gracias.",
-            **voice_params,
-        )
+        if evento_calendario:
+            saludo_fallback = (
+                f"Hola, soy {nombre}. Estoy en una reunión y no puedo contestar. "
+                "Deja tu nombre, el motivo de tu llamada, "
+                "y te devuelvo el llamado apenas termine. Gracias."
+            )
+        else:
+            saludo_fallback = (
+                f"Hola, soy {nombre}. No puedo atender en este momento. "
+                "Por favor, deja tu nombre, el motivo de tu llamada "
+                "y te devolveré el llamado. Gracias."
+            )
+        respuesta.say(saludo_fallback, **voice_params)
 
     # Escuchar lo que dice el llamante (no IA, solo grabar)
     # Usamos Gather en vez de Record para obtener transcripción
@@ -255,7 +280,7 @@ def _responder_modo_contestadora(usuario: Usuario | None, base_url: str) -> Resp
 # MODO 3: HÍBRIDO (audio grabado + IA conversa después)
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_hibrido(usuario: Usuario | None, base_url: str) -> Response:
+def _responder_modo_hibrido(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
     """Reproduce el audio del usuario como saludo, luego la IA toma el control.
 
     Flujo:
@@ -321,7 +346,7 @@ async def procesar_llamada(request: Request, SpeechResult: str = Form("")):
 
     conv.agregar_mensaje_usuario(SpeechResult)
 
-    # Generar respuesta con prompt personalizado
+    # Generar respuesta con prompt personalizado (incluye contexto calendario si aplica)
     system_prompt = _construir_system_prompt(usuario)
     from app.services.llm_service import openai_client
     from app.core.config import settings as app_settings

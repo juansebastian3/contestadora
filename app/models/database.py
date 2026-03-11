@@ -61,6 +61,12 @@ class ModoAsistente(str, enum.Enum):
     HIBRIDO = "hibrido"                      # Audio grabado como saludo + IA toma el control después
 
 
+class CalendarioModo(str, enum.Enum):
+    SOLO_REUNIONES = "solo_reuniones"   # Activa solo durante reuniones del calendario
+    SIEMPRE_AGENDA = "siempre_agenda"   # Activa si hay CUALQUIER evento (incluso todo el día)
+    MANUAL = "manual"                    # No auto-activar, el usuario decide
+
+
 class TipoVoz(str, enum.Enum):
     POLLY = "polly"            # Gratuita - Amazon Polly vía Twilio
     ELEVENLABS = "elevenlabs"  # Premium - ElevenLabs
@@ -117,6 +123,12 @@ class Usuario(Base):
 
     # Contactos conocidos (JSON array de números)
     contactos_conocidos = Column(JSON, default=list)
+
+    # Integración Calendarios (Pro/Premium)
+    google_calendar_token = Column(JSON, nullable=True)      # {access_token, refresh_token, expiry}
+    outlook_calendar_token = Column(JSON, nullable=True)     # {access_token, refresh_token, expiry}
+    calendario_auto_activar = Column(Boolean, default=False) # Activar contestadora según agenda
+    calendario_modo = Column(String(30), default="solo_reuniones")  # solo_reuniones | siempre_agenda | manual
 
     # Relaciones
     llamadas = relationship("Llamada", back_populates="usuario")
@@ -277,25 +289,25 @@ def seed_voces_y_planes(db):
                 llamadas_mes=30, minutos_mes=60,
                 voces_polly=True, voces_elevenlabs=False, voz_personalizada=False,
                 modo_luna=False, analisis_avanzado=False, prioridad_soporte=False,
-                descripcion="Filtra llamadas desconocidas con voces estándar",
+                descripcion="Contestadora IA para llamadas desconocidas",
                 features_json=["30 llamadas/mes", "60 min de filtrado", "5 voces estándar", "Resumen WhatsApp", "Modo desconocidos"],
             ),
             Plan(
                 codigo="pro", nombre="Pro", precio_mensual_usd=4.99, precio_anual_usd=49.99,
                 llamadas_mes=200, minutos_mes=500,
-                voces_polly=True, voces_elevenlabs=True, voz_personalizada=False,
+                voces_polly=True, voces_elevenlabs=True, voz_personalizada=True,
                 modo_luna=True, analisis_avanzado=True, prioridad_soporte=False,
                 destacado=True,
-                descripcion="Voces ultra-realistas y modo luna",
-                features_json=["200 llamadas/mes", "500 min de filtrado", "Voces IA ElevenLabs", "Modo Luna", "Análisis avanzado", "Historial completo"],
+                descripcion="Graba tu propia contestadora + modo luna",
+                features_json=["200 llamadas/mes", "500 min de filtrado", "Voces IA ElevenLabs", "Graba tu contestadora", "Prompt personalizado", "Modo Luna", "Análisis avanzado", "Google Calendar + Outlook"],
             ),
             Plan(
                 codigo="premium", nombre="Premium", precio_mensual_usd=12.99, precio_anual_usd=129.99,
                 llamadas_mes=9999, minutos_mes=9999,
                 voces_polly=True, voces_elevenlabs=True, voz_personalizada=True,
                 modo_luna=True, analisis_avanzado=True, prioridad_soporte=True,
-                descripcion="Todo ilimitado + clona tu voz",
-                features_json=["Llamadas ilimitadas", "Minutos ilimitados", "Todas las voces", "Clona tu voz con IA", "Modo Luna con horario", "Soporte prioritario", "API access"],
+                descripcion="Todo ilimitado + soporte prioritario",
+                features_json=["Llamadas ilimitadas", "Minutos ilimitados", "Todas las voces", "Graba tu contestadora", "Prompt personalizado", "Modo Luna con horario", "Google Calendar + Outlook", "Soporte prioritario"],
             ),
         ]
         db.add_all(planes)

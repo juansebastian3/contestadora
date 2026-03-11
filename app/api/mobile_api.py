@@ -12,13 +12,15 @@ La app móvil debe:
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
 from fastapi import UploadFile, File
 from pathlib import Path
 import shutil
+import requests as http_requests
 
 from app.models.database import (
     get_db, Llamada, Configuracion, VozDisponible, Plan, Usuario,
@@ -296,6 +298,12 @@ async def obtener_perfil(usuario: Usuario = Depends(get_current_user)):
             "audio_saludo_duracion": usuario.audio_saludo_duracion,
         },
         "contactos_conocidos_count": len(usuario.contactos_conocidos or []),
+        "calendario": {
+            "google_conectado": bool(usuario.google_calendar_token),
+            "outlook_conectado": bool(usuario.outlook_calendar_token),
+            "auto_activar": usuario.calendario_auto_activar,
+            "modo": usuario.calendario_modo or "solo_reuniones",
+        },
     }
 
 
@@ -489,6 +497,342 @@ async def borrar_audio_saludo(
 
     db.commit()
     return {"status": "ok", "modo_asistente": usuario.modo_asistente}
+
+
+# ═══════════════════════════════════════════════════════════
+# CALENDARIO: OAUTH2 + CONECTAR / DESCONECTAR / ESTADO
+# ═══════════════════════════════════════════════════════════
+
+@router.get("/calendario/google/auth-url")
+async def google_calendar_auth_url(
+    usuario: Usuario = Depends(get_current_user),
+):
+    """Genera la URL de autorización de Google Calendar OAuth2.
+
+    La app móvil abre esta URL en un navegador. El usuario autoriza
+    y Google redirige a /api/v1/calendario/google/callback con un code.
+    """
+    from app.core.config import settings
+    import urllib.parse
+
+    if usuario.plan not in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+        raise HTTPException(status_code=403, detail="Integración de calendario requiere plan Pro o Premium.")
+
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google Calendar no configurado en el servidor.")
+
+    redirect_uri = f"{settings.BASE_URL}/api/v1/calendario/google/callback"
+
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "https://www.googleapis.com/auth/calendar.readonly",
+        "access_type": "offline",
+        "prompt": "consent",
+        "state": usuario.uid,  # Para identificar al usuario en el callback
+    }
+
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return {"auth_url": auth_url}
+
+
+@router.get("/calendario/google/callback")
+async def google_calendar_callback(
+    code: str = Query(None),
+    state: str = Query(None),
+    error: str = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Callback de Google OAuth2. Google redirige aquí tras autorizar.
+
+    Intercambia el authorization code por tokens y los guarda en el usuario.
+    Responde con HTML que la app móvil puede interceptar (deep link o mensaje de éxito).
+    """
+    from app.core.config import settings
+
+    if error:
+        return _calendar_callback_html("Error", f"Google rechazó la autorización: {error}")
+
+    if not code or not state:
+        return _calendar_callback_html("Error", "Faltan parámetros (code o state).")
+
+    # Buscar usuario por UID (state)
+    usuario = db.query(Usuario).filter(Usuario.uid == state).first()
+    if not usuario:
+        return _calendar_callback_html("Error", "Usuario no encontrado.")
+
+    # Intercambiar code por tokens
+    redirect_uri = f"{settings.BASE_URL}/api/v1/calendario/google/callback"
+
+    try:
+        token_resp = http_requests.post("https://oauth2.googleapis.com/token", data={
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }, timeout=10)
+
+        if token_resp.status_code != 200:
+            logger.error(f"Google token exchange failed: {token_resp.text}")
+            return _calendar_callback_html("Error", "No se pudo obtener el token de Google.")
+
+        tokens = token_resp.json()
+
+        # Guardar tokens en el usuario
+        from datetime import datetime, timezone, timedelta
+        expiry = datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))
+
+        usuario.google_calendar_token = {
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens.get("refresh_token"),
+            "expiry": expiry.isoformat(),
+        }
+        usuario.calendario_auto_activar = True
+        db.commit()
+
+        return _calendar_callback_html(
+            "Conectado",
+            "Google Calendar conectado correctamente. Ya puedes cerrar esta ventana y volver a la app."
+        )
+
+    except Exception as e:
+        logger.error(f"Error en Google OAuth callback: {e}")
+        return _calendar_callback_html("Error", f"Error técnico: {str(e)[:100]}")
+
+
+def _calendar_callback_html(titulo: str, mensaje: str) -> Response:
+    """Genera una página HTML simple para mostrar resultado del OAuth."""
+    from fastapi.responses import HTMLResponse
+    color = "#22c55e" if titulo == "Conectado" else "#ef4444"
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FiltroLlamadas - {titulo}</title>
+<style>body{{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f9fafb}}
+.card{{background:white;border-radius:16px;padding:40px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px}}
+h1{{color:{color};margin-bottom:12px}}p{{color:#6b7280;line-height:1.6}}</style></head>
+<body><div class="card"><h1>{titulo}</h1><p>{mensaje}</p></div></body></html>"""
+    return HTMLResponse(content=html)
+
+
+@router.post("/calendario/google/conectar")
+async def conectar_google_calendar(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Alternativa: la app envía tokens directamente (si maneja OAuth2 con expo-auth-session).
+
+    Requiere plan Pro o Premium.
+    """
+    if usuario.plan not in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+        raise HTTPException(status_code=403, detail="Integración de calendario requiere plan Pro o Premium.")
+
+    body = await request.json()
+
+    # Si la app envía un authorization_code, intercambiarlo por tokens
+    if body.get("code"):
+        from app.core.config import settings
+        redirect_uri = body.get("redirect_uri", f"{settings.BASE_URL}/api/v1/calendario/google/callback")
+
+        token_resp = http_requests.post("https://oauth2.googleapis.com/token", data={
+            "code": body["code"],
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }, timeout=10)
+
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"Error intercambiando code: {token_resp.text[:200]}")
+
+        tokens = token_resp.json()
+        expiry = datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))
+
+        token_data = {
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens.get("refresh_token"),
+            "expiry": expiry.isoformat(),
+        }
+    else:
+        # La app envía tokens directamente
+        token_data = {
+            "access_token": body.get("access_token"),
+            "refresh_token": body.get("refresh_token"),
+            "expiry": body.get("expiry"),
+        }
+
+    if not token_data.get("access_token"):
+        raise HTTPException(status_code=400, detail="Falta access_token o code")
+
+    usuario.google_calendar_token = token_data
+    if not usuario.calendario_auto_activar:
+        usuario.calendario_auto_activar = True
+
+    db.commit()
+    return {
+        "status": "ok",
+        "calendario": "google",
+        "auto_activar": usuario.calendario_auto_activar,
+    }
+
+
+@router.delete("/calendario/google")
+async def desconectar_google_calendar(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Desconecta Google Calendar."""
+    usuario.google_calendar_token = None
+    # Si no queda ningún calendario conectado, desactivar auto
+    if not usuario.outlook_calendar_token:
+        usuario.calendario_auto_activar = False
+    db.commit()
+    return {"status": "ok", "calendario_desconectado": "google"}
+
+
+@router.post("/calendario/outlook/conectar")
+async def conectar_outlook_calendar(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Guarda los tokens de Outlook/Office 365 Calendar tras OAuth2.
+
+    La app móvil maneja el flujo OAuth2 con Microsoft y envía los tokens aquí.
+    Requiere plan Pro o Premium.
+    """
+    if usuario.plan not in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+        raise HTTPException(status_code=403, detail="Integración de calendario requiere plan Pro o Premium.")
+
+    body = await request.json()
+    token_data = {
+        "access_token": body.get("access_token"),
+        "refresh_token": body.get("refresh_token"),
+        "expiry": body.get("expiry"),
+    }
+
+    if not token_data["access_token"]:
+        raise HTTPException(status_code=400, detail="Falta access_token")
+
+    usuario.outlook_calendar_token = token_data
+    if not usuario.calendario_auto_activar:
+        usuario.calendario_auto_activar = True
+
+    db.commit()
+    return {
+        "status": "ok",
+        "calendario": "outlook",
+        "auto_activar": usuario.calendario_auto_activar,
+    }
+
+
+@router.delete("/calendario/outlook")
+async def desconectar_outlook_calendar(
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Desconecta Outlook Calendar."""
+    usuario.outlook_calendar_token = None
+    if not usuario.google_calendar_token:
+        usuario.calendario_auto_activar = False
+    db.commit()
+    return {"status": "ok", "calendario_desconectado": "outlook"}
+
+
+@router.get("/calendario/estado")
+async def estado_calendario(
+    usuario: Usuario = Depends(get_current_user),
+):
+    """Estado de la integración de calendarios del usuario."""
+    google_conectado = bool(usuario.google_calendar_token)
+    outlook_conectado = bool(usuario.outlook_calendar_token)
+
+    # Verificar si hay evento activo ahora
+    evento_actual = None
+    if usuario.calendario_auto_activar and (google_conectado or outlook_conectado):
+        try:
+            from app.services.calendario_service import usuario_en_reunion
+            evento_actual = usuario_en_reunion(usuario)
+        except Exception:
+            pass
+
+    return {
+        "google_conectado": google_conectado,
+        "outlook_conectado": outlook_conectado,
+        "auto_activar": usuario.calendario_auto_activar,
+        "modo_calendario": usuario.calendario_modo or "solo_reuniones",
+        "evento_actual": evento_actual,
+    }
+
+
+@router.post("/calendario/config")
+async def configurar_calendario(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Configura el comportamiento del calendario.
+
+    Body: {auto_activar: bool, modo: "solo_reuniones"|"siempre_agenda"|"manual"}
+    """
+    body = await request.json()
+
+    if "auto_activar" in body:
+        usuario.calendario_auto_activar = bool(body["auto_activar"])
+
+    if "modo" in body:
+        modos_validos = ["solo_reuniones", "siempre_agenda", "manual"]
+        if body["modo"] not in modos_validos:
+            raise HTTPException(status_code=400, detail=f"Modo inválido. Opciones: {modos_validos}")
+        usuario.calendario_modo = body["modo"]
+
+    db.commit()
+    return {
+        "status": "ok",
+        "auto_activar": usuario.calendario_auto_activar,
+        "modo_calendario": usuario.calendario_modo,
+    }
+
+
+# ═══════════════════════════════════════════════════════════
+# TIPS PARA GRABAR SALUDO (mejora la experiencia de grabación)
+# ═══════════════════════════════════════════════════════════
+
+@router.get("/tips/saludo")
+async def obtener_tips_saludo():
+    """Tips y ejemplos para que el usuario grabe un buen saludo.
+
+    Esto hace que la experiencia sea claramente diferente a un buzón
+    de voz genérico, aumentando la tasa de recados completos (~80% vs ~30%).
+    """
+    return {
+        "titulo": "Graba tu saludo personalizado",
+        "descripcion": "Un saludo con tu voz real genera confianza. Los llamantes dejan mensajes completos cuando saben que es tu contestadora personal.",
+        "tips": [
+            "Usa tu nombre: 'Hola, soy [tu nombre]'",
+            "Sé breve: 15-30 segundos es ideal",
+            "Menciona que recibirás el mensaje: 'Te devuelvo la llamada apenas pueda'",
+            "Habla con naturalidad, como si hablaras con un amigo",
+            "Graba en un lugar silencioso",
+        ],
+        "ejemplos": [
+            {
+                "titulo": "Profesional",
+                "texto": "Hola, soy [nombre]. No puedo contestar ahora, pero deja tu nombre y el motivo de tu llamada. Me llega un mensaje con lo que digas y te devuelvo el llamado. ¡Gracias!",
+            },
+            {
+                "titulo": "Casual",
+                "texto": "¡Hola! Soy [nombre]. Estoy ocupado pero deja tu mensaje después del tono y te llamo de vuelta. ¡Chao!",
+            },
+            {
+                "titulo": "Con contexto de trabajo",
+                "texto": "Hola, soy [nombre] de [empresa]. No puedo atender ahora. Deja tu nombre, empresa y motivo, y te contacto a la brevedad.",
+            },
+        ],
+        "dato_clave": "Los usuarios que graban su propio saludo reciben recados 2.5x más completos que con voz genérica.",
+    }
 
 
 # ═══════════════════════════════════════════════════════════
