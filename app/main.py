@@ -61,6 +61,12 @@ app.include_router(webhooks_router)    # /webhooks/voice/* (sin auth - Twilio)
 app.include_router(mobile_router)      # /api/v1/* (con auth JWT)
 app.include_router(ws_router)          # /ws/* (WebSocket)
 
+# --- NUEVA RUTA DE HEALTHCHECK PARA RAILWAY ---
+@app.get("/api/v1/health")
+async def health_check():
+    """Ruta para que Railway verifique que la app está viva."""
+    return {"status": "ok", "message": "FiltroLlamadas is healthy"}
+# ----------------------------------------------
 
 @app.on_event("startup")
 async def startup_event():
@@ -83,6 +89,7 @@ async def root():
         "version": "1.0.0",
         "status": "running",
         "endpoints": {
+            "health": "/api/v1/health",
             "auth": "/auth/registro | /auth/login | /auth/refresh",
             "webhooks": "/webhooks/voice/incoming",
             "websocket": "/ws/media-stream",
