@@ -22,6 +22,7 @@ import HistorialScreen from "./screens/HistorialScreen";
 import PersonalizacionScreen from "./screens/PersonalizacionScreen";
 import ConfigScreen from "./screens/ConfigScreen";
 import VocesScreen from "./screens/VocesScreen";
+import CalendarioScreen from "./screens/CalendarioScreen";
 
 import api from "./services/api";
 import { colors } from "./utils/theme";
@@ -53,7 +54,7 @@ function MainTabs() {
             Dashboard: focused ? "grid" : "grid-outline",
             Historial: focused ? "time" : "time-outline",
             Personalizar: focused ? "color-wand" : "color-wand-outline",
-            Voces: focused ? "mic" : "mic-outline",
+            Calendario: focused ? "calendar" : "calendar-outline",
             Config: focused ? "settings" : "settings-outline",
           };
           return <Ionicons name={icons[route.name]} size={22} color={color} />;
@@ -76,9 +77,9 @@ function MainTabs() {
         options={{ tabBarLabel: "Mi IA" }}
       />
       <Tab.Screen
-        name="Voces"
-        component={VocesScreen}
-        options={{ tabBarLabel: "Voces" }}
+        name="Calendario"
+        component={CalendarioScreen}
+        options={{ tabBarLabel: "Agenda" }}
       />
       <Tab.Screen
         name="Config"

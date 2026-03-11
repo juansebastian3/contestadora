@@ -9,7 +9,9 @@
     "splash": {
       "backgroundColor": "#0F0F23"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.filtrollamadas.app",
@@ -20,6 +22,9 @@
         "backgroundColor": "#0F0F23"
       },
       "package": "com.filtrollamadas.app"
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

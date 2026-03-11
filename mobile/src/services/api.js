@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ═══ CONFIGURACIÓN ═══
 // Cambiar a tu URL real (ngrok, Railway, etc.)
-const API_BASE = "https://TU_DOMINIO";
+const API_BASE = "https://contestadora-production.up.railway.app";
 
 const STORAGE_KEYS = {
   ACCESS_TOKEN: "@filtro_access_token",
