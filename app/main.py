@@ -110,6 +110,8 @@ def _aplicar_migraciones(db):
             "calendario_auto_activar": "BOOLEAN DEFAULT FALSE",
             "calendario_modo": "VARCHAR(30) DEFAULT 'solo_reuniones'",
             "mercadopago_customer_id": "VARCHAR(100)",
+            "telefono_twilio": "VARCHAR(20)",
+            "twilio_phone_sid": "VARCHAR(50)",
         }
 
         for col_name, col_type in nuevas_columnas.items():

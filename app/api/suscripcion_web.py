@@ -328,7 +328,7 @@ def _render_planes_html() -> str:
             <div class="plan-nombre">Pro</div>
             <div class="plan-precio" id="precio-pro">$4.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-pro" style="display:none;"></div>
-            <div class="plan-desc">Graba tu propia contestadora + modo luna + voces IA</div>
+            <div class="plan-desc">Tu voz grabada como contestadora personal + modo luna</div>
             <div class="periodo-toggle">
                 <button class="periodo-btn active" onclick="setPeriodo('pro','mensual',this)">Mensual</button>
                 <button class="periodo-btn" onclick="setPeriodo('pro','anual',this)">Anual</button>
@@ -336,11 +336,11 @@ def _render_planes_html() -> str:
             <ul class="features">
                 <li>200 llamadas / mes</li>
                 <li>500 minutos de filtrado</li>
-                <li>Voces IA ElevenLabs</li>
-                <li>Graba tu contestadora</li>
+                <li>Tu voz grabada para conocidos</li>
+                <li>Voz Polly para desconocidos</li>
                 <li>Prompt personalizado</li>
                 <li>Modo Luna</li>
-                <li>Google Calendar + Outlook</li>
+                <li>Transcripcion y resumen IA</li>
             </ul>
             <button class="btn-suscribir pro" onclick="suscribir('pro')" id="btn-pro" disabled>Suscribirme a Pro</button>
         </div>
@@ -348,9 +348,9 @@ def _render_planes_html() -> str:
         <!-- PREMIUM -->
         <div class="plan-card">
             <div class="plan-nombre">Premium</div>
-            <div class="plan-precio" id="precio-premium">$12.99<span>/mes</span></div>
+            <div class="plan-precio" id="precio-premium">$9.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-premium" style="display:none;"></div>
-            <div class="plan-desc">Todo ilimitado + soporte prioritario</div>
+            <div class="plan-desc">Secretaria IA que conversa, agenda y gestiona tus llamadas</div>
             <div class="periodo-toggle">
                 <button class="periodo-btn active" onclick="setPeriodo('premium','mensual',this)">Mensual</button>
                 <button class="periodo-btn" onclick="setPeriodo('premium','anual',this)">Anual</button>
@@ -358,10 +358,10 @@ def _render_planes_html() -> str:
             <ul class="features">
                 <li>Llamadas ilimitadas</li>
                 <li>Minutos ilimitados</li>
-                <li>Todas las voces</li>
-                <li>Graba tu contestadora</li>
-                <li>Modo Luna con horario</li>
+                <li>Tu voz grabada + IA conversa</li>
+                <li>Secretaria IA inteligente</li>
                 <li>Google Calendar + Outlook</li>
+                <li>Modo Luna con horario</li>
                 <li>Soporte prioritario</li>
             </ul>
             <button class="btn-suscribir premium" onclick="suscribir('premium')" id="btn-premium" disabled>Suscribirme a Premium</button>
@@ -386,7 +386,7 @@ def _render_planes_html() -> str:
         let periodos = {{ pro: "mensual", premium: "mensual" }};
         const precios = {{
             pro: {{ mensual: 4.99, anual: 49.99 }},
-            premium: {{ mensual: 12.99, anual: 129.99 }}
+            premium: {{ mensual: 9.99, anual: 99.99 }}
         }};
 
         // Check if token comes from app via URL param

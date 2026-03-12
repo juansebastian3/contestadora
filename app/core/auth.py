@@ -166,10 +166,10 @@ def _build_perfil(u: Usuario) -> dict:
         "plan": u.plan,
         "nombre_asistente": u.nombre_asistente,
         "modo_filtrado": u.modo_filtrado,
+        "telefono_twilio": u.telefono_twilio,
         "voz": {
             "tipo": u.voz_tipo,
             "polly_id": u.voz_polly_id,
-            "elevenlabs_id": u.voz_elevenlabs_id,
         },
     }
 

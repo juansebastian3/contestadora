@@ -30,15 +30,15 @@ logger = logging.getLogger(__name__)
 PLANES_CONFIG = {
     "pro": {
         "titulo": "FiltroLlamadas Pro",
-        "descripcion": "200 llamadas/mes, voces IA, modo luna, calendario",
+        "descripcion": "Tu voz grabada como contestadora + modo luna + 200 llamadas/mes",
         "precio_mensual": 4.99,
         "precio_anual": 49.99,
     },
     "premium": {
         "titulo": "FiltroLlamadas Premium",
-        "descripcion": "Ilimitado, soporte prioritario, todas las funciones",
-        "precio_mensual": 12.99,
-        "precio_anual": 129.99,
+        "descripcion": "Secretaria IA que conversa + calendario + llamadas ilimitadas",
+        "precio_mensual": 9.99,
+        "precio_anual": 99.99,
     },
 }
 
@@ -237,6 +237,18 @@ def procesar_notificacion_pago(payment_id: str, db_session) -> dict:
         usuario.plan = plan_codigo
         usuario.plan_expira = suscripcion.fecha_fin
         logger.info(f"Plan {plan_codigo} activado para {usuario_uid} hasta {suscripcion.fecha_fin}")
+
+        # Auto-asignar numero Twilio si no tiene uno
+        if not usuario.telefono_twilio:
+            try:
+                from app.services.twilio_numbers import asignar_numero_a_usuario
+                resultado_twilio = asignar_numero_a_usuario(db_session, usuario)
+                if resultado_twilio:
+                    logger.info(f"Numero Twilio {resultado_twilio['phone_number']} auto-asignado a {usuario_uid}")
+                else:
+                    logger.warning(f"No se pudo auto-asignar numero Twilio a {usuario_uid}")
+            except Exception as e_twilio:
+                logger.error(f"Error auto-asignando numero Twilio: {e_twilio}")
 
     elif estado_mp in ("rejected", "cancelled"):
         suscripcion.estado = EstadoSuscripcion.RECHAZADA.value

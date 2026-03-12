@@ -1,22 +1,22 @@
 """Webhooks de Twilio para manejo de llamadas de voz.
 
-3 MODOS DE ASISTENTE:
+3 MODOS DE ASISTENTE (alineados con planes):
 ─────────────────────────────────────────────────────────────────
-  IA_CONVERSACIONAL (default):
-    Sofía saluda con la voz elegida, conversa con el llamante,
-    analiza y resume al final. El saludo se genera desde el
-    prompt_personalizado del usuario (o el default).
+  ASISTENTE_BASICO (Free):
+    Polly saluda: "Hola, soy la asistente de {nombre}..."
+    IA solo ESCUCHA y transcribe. No conversa.
+    Post-llamada: análisis + resumen WhatsApp.
 
-  CONTESTADORA:
-    Se reproduce el audio grabado por el usuario (su voz real).
-    Después, la IA NO habla: solo escucha lo que dice el llamante.
-    Al finalizar, analiza todo y envía resumen por WhatsApp.
-    → Experiencia tipo contestadora clásica pero con IA detrás.
+  CONTESTADORA (Pro):
+    Tu voz grabada como saludo.
+    Para desconocidos: Polly saluda (como Free).
+    Para conocidos en modo Luna: tu voz saluda.
+    IA solo ESCUCHA. No conversa.
 
-  HIBRIDO:
-    Se reproduce el audio grabado como saludo inicial.
-    Después, la IA toma el control y conversa normalmente.
-    → Lo mejor de ambos mundos: tu voz real + IA inteligente.
+  SECRETARIA_IA (Premium):
+    Tu voz grabada como saludo + IA conversa como secretaria.
+    Consulta calendario, agenda reuniones, gestiona horarios.
+    Conversación completa con GPT-4o-mini.
 ─────────────────────────────────────────────────────────────────
 """
 import logging
@@ -26,12 +26,11 @@ from twilio.twiml.voice_response import VoiceResponse, Gather
 
 from app.core.config import settings
 from app.services.call_manager import call_manager
-from app.services.llm_service import generar_respuesta_conversacion, analizar_llamada
+from app.services.llm_service import analizar_llamada
 from app.services.whatsapp_service import enviar_resumen_llamada, enviar_alerta_llamada_entrante
 from app.services.filtrado_service import decidir_filtrado
-from app.services.tts_service import generar_twiml_con_voz
 from app.models.database import (
-    SessionLocal, Llamada, Usuario, EstadoLlamada, TipoVoz, ModoAsistente
+    SessionLocal, Llamada, Usuario, EstadoLlamada, ModoAsistente, PlanTipo
 )
 
 logger = logging.getLogger(__name__)
@@ -54,63 +53,78 @@ def _obtener_usuario_por_numero_twilio(numero_destino: str) -> Usuario | None:
 
 
 def _get_voice_params(usuario: Usuario | None) -> dict:
+    """Retorna parámetros de voz Polly para TTS."""
     if usuario and usuario.voz_polly_id:
         return {"language": "es-CL", "voice": usuario.voz_polly_id}
     return {"language": "es-CL", "voice": "Polly.Mia"}
 
 
-def _construir_saludo_ia(usuario: Usuario | None, evento_calendario: dict = None) -> str:
-    """Construye el saludo tipo contestadora."""
-    nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
+def _construir_saludo_basico(usuario: Usuario | None) -> str:
+    """Saludo estándar para modo Free (Polly habla)."""
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
-
-    if evento_calendario:
-        return (
-            f"Hola, soy {nombre_asistente}, asistente de {nombre_owner}. "
-            f"En este momento {nombre_owner} está en una reunión y no puede contestar. "
-            "¿Con quién hablo y cuál es el motivo de tu llamada? "
-            "Apenas termine le paso tu mensaje."
-        )
-
     return (
-        f"Hola, soy {nombre_asistente}, asistente de {nombre_owner}. "
-        f"En este momento {nombre_owner} no puede atender. "
-        "¿Con quién hablo y cuál es el motivo de tu llamada? "
-        "Le haré llegar tu mensaje."
+        f"Hola, soy la asistente de {nombre_owner}. "
+        f"Por favor, dime tu nombre y cuál es el recado que quieres dejar. "
+        f"Le haré llegar tu mensaje."
     )
 
 
-def _construir_system_prompt(usuario: Usuario | None, evento_calendario: dict = None) -> str:
-    """Construye el system prompt del LLM: contestadora que toma recados."""
+def _construir_system_prompt_secretaria(usuario: Usuario | None, evento_calendario: dict = None) -> str:
+    """System prompt para modo Premium (secretaria IA que conversa)."""
     nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
 
     base = (
-        f"Eres {nombre_asistente}, la asistente telefónica de {nombre_owner}.\n\n"
-        "TU OBJETIVO: Que el llamante DEJE UN RECADO completo. Eres una contestadora inteligente.\n\n"
-        "REGLAS CRÍTICAS:\n"
-        f"- NUNCA digas 'contacta a {nombre_owner} directamente' ni 'intenta llamarlo' — ESO ES LO QUE YA ESTÁN HACIENDO.\n"
-        "- NUNCA digas 'no tengo información sobre su agenda' — no la necesitas, solo toma el recado.\n"
-        "- Tu trabajo es: escuchar el motivo, confirmar que entendiste, y despedirte.\n"
-        "- Si es spam/marketing: 'Gracias, pero no le interesa. Que le vaya bien.'\n"
-        f"- Si es importante: 'Perfecto, le aviso a {nombre_owner} que llamaste por [motivo]. ¿Algo más?'\n"
-        f"- Despedida: '{nombre_owner} va a recibir tu mensaje. ¡Que te vaya bien!'\n"
-        "- Máximo 2-3 oraciones por respuesta. Tono chileno cercano y profesional."
+        f"Eres {nombre_asistente}, la secretaria personal de {nombre_owner}.\n\n"
+        "TU ROL: Secretaria telefónica profesional que CONVERSA con el llamante.\n\n"
+        "CAPACIDADES:\n"
+        "- Tomar recados completos (nombre, motivo, urgencia)\n"
+        "- Informar disponibilidad basada en el calendario\n"
+        "- Ofrecer agendar una reunión o devolución de llamada\n"
+        "- Filtrar spam con cortesía\n\n"
+        "REGLAS:\n"
+        f"- NUNCA digas 'contacta a {nombre_owner} directamente' — ESO ES LO QUE YA ESTÁN HACIENDO.\n"
+        "- Si es spam/marketing: 'Gracias, pero no nos interesa. Que le vaya bien.'\n"
+        f"- Si es importante: 'Le paso tu mensaje a {nombre_owner}. ¿Quieres que agende una llamada de vuelta?'\n"
+        "- Máximo 2-3 oraciones por respuesta. Tono profesional y cercano."
     )
 
-    # Contexto de calendario: si está en reunión, la IA lo sabe
     if evento_calendario:
-        titulo_evento = evento_calendario.get("titulo", "una reunión")
+        titulo = evento_calendario.get("titulo", "una reunión")
         base += (
-            f"\n\nCONTEXTO ACTUAL: {nombre_owner} está en '{titulo_evento}' y no puede contestar. "
-            f"Puedes mencionar que está en una reunión (sin dar detalles del evento). "
-            f"Ejemplo: '{nombre_owner} está en una reunión en este momento, pero apenas termine le paso tu mensaje.'"
+            f"\n\nCALENDARIO: {nombre_owner} está en '{titulo}' ahora. "
+            f"Puedes mencionarlo: '{nombre_owner} está en una reunión, pero apenas termine le paso tu mensaje.'"
         )
 
     if usuario and usuario.prompt_personalizado:
-        base += f"\n\nINSTRUCCIONES ADICIONALES DEL DUEÑO:\n{usuario.prompt_personalizado}"
+        base += f"\n\nINSTRUCCIONES DEL DUEÑO:\n{usuario.prompt_personalizado}"
 
     return base
+
+
+def _determinar_modo_asistente(usuario: Usuario | None, numero_conocido: bool) -> str:
+    """Determina el modo de asistente según el plan y contexto.
+
+    Free → siempre ASISTENTE_BASICO (Polly saluda, IA escucha)
+    Pro  → desconocidos: ASISTENTE_BASICO | conocidos/luna: CONTESTADORA (tu voz)
+    Premium → siempre SECRETARIA_IA (tu voz + IA conversa)
+    """
+    if not usuario:
+        return ModoAsistente.ASISTENTE_BASICO.value
+
+    plan = usuario.plan or PlanTipo.FREE.value
+
+    if plan == PlanTipo.PREMIUM.value:
+        return ModoAsistente.SECRETARIA_IA.value
+    elif plan == PlanTipo.PRO.value:
+        # Pro: si tiene audio grabado y es conocido o modo luna → su voz
+        if usuario.audio_saludo_url and numero_conocido:
+            return ModoAsistente.CONTESTADORA.value
+        # Pro desconocidos o sin audio → Polly básico
+        return ModoAsistente.ASISTENTE_BASICO.value
+    else:
+        # Free: siempre básico
+        return ModoAsistente.ASISTENTE_BASICO.value
 
 
 # ═══════════════════════════════════════════════════════════
@@ -119,19 +133,19 @@ def _construir_system_prompt(usuario: Usuario | None, evento_calendario: dict = 
 
 @router.api_route("/incoming", methods=["GET", "POST"])
 async def contestar_llamada(request: Request):
-    """Webhook principal. Decide qué modo usar y responde acorde."""
+    """Webhook principal. Identifica usuario, decide filtrado y modo."""
     form_data = await request.form()
     call_sid = form_data.get("CallSid", "unknown")
     numero_origen = form_data.get("From", "Desconocido")
     numero_destino = form_data.get("To", "")
     base_url = str(request.base_url).rstrip("/")
 
-    logger.info(f"📞 Llamada: {call_sid} | {numero_origen} → {numero_destino}")
+    logger.info(f"Llamada: {call_sid} | {numero_origen} -> {numero_destino}")
 
-    # ═══ 1. IDENTIFICAR USUARIO ═══
+    # 1. IDENTIFICAR USUARIO por su número Twilio
     usuario = _obtener_usuario_por_numero_twilio(numero_destino)
 
-    # ═══ 2. DECIDIR FILTRADO ═══
+    # 2. DECIDIR FILTRADO
     debe_filtrar = True
     modo_activo = "desconocidos"
     numero_conocido = False
@@ -143,14 +157,14 @@ async def contestar_llamada(request: Request):
         modo_activo = resultado.modo_activo
         numero_conocido = resultado.numero_conocido
         evento_calendario = resultado.evento_calendario
-        logger.info(f"🔍 Filtrado: {resultado.motivo}")
+        logger.info(f"Filtrado: {resultado.motivo}")
 
         if not debe_filtrar:
             respuesta = VoiceResponse()
             respuesta.dial(usuario.telefono)
             return Response(content=str(respuesta), media_type="application/xml")
 
-    # ═══ 3. REGISTRAR LLAMADA ═══
+    # 3. REGISTRAR LLAMADA
     call_manager.iniciar_llamada(call_sid, numero_origen)
 
     db = SessionLocal()
@@ -174,218 +188,128 @@ async def contestar_llamada(request: Request):
 
     enviar_alerta_llamada_entrante(numero_origen)
 
-    # ═══ 4. ELEGIR MODO DE ASISTENTE ═══
-    modo_asistente = ModoAsistente.IA_CONVERSACIONAL.value
-    if usuario:
-        modo_asistente = usuario.modo_asistente or ModoAsistente.IA_CONVERSACIONAL.value
+    # 4. ELEGIR MODO SEGÚN PLAN Y CONTEXTO
+    modo = _determinar_modo_asistente(usuario, numero_conocido)
+    logger.info(f"Modo: {modo} | Plan: {usuario.plan if usuario else 'ninguno'}")
 
-    logger.info(f"🤖 Modo asistente: {modo_asistente}")
-
-    if modo_asistente == ModoAsistente.CONTESTADORA.value:
-        return _responder_modo_contestadora(usuario, base_url, evento_calendario)
-    elif modo_asistente == ModoAsistente.HIBRIDO.value:
-        return _responder_modo_hibrido(usuario, base_url, evento_calendario)
+    if modo == ModoAsistente.SECRETARIA_IA.value:
+        return _responder_secretaria_ia(usuario, base_url, evento_calendario)
+    elif modo == ModoAsistente.CONTESTADORA.value:
+        return _responder_contestadora(usuario, base_url, evento_calendario)
     else:
-        return _responder_modo_ia(usuario, base_url, evento_calendario)
+        return _responder_asistente_basico(usuario, base_url)
 
 
 # ═══════════════════════════════════════════════════════════
-# MODO 1: IA CONVERSACIONAL (default)
+# MODO 1: ASISTENTE BÁSICO (Free + Pro desconocidos)
+# Polly saluda, IA solo escucha
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_ia(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
-    """La IA saluda y conversa con el llamante."""
+def _responder_asistente_basico(usuario: Usuario | None, base_url: str) -> Response:
+    """Polly dice el saludo estándar, luego solo escucha el recado."""
     respuesta = VoiceResponse()
     respuesta.pause(length=1)
 
-    saludo = _construir_saludo_ia(usuario, evento_calendario)
+    saludo = _construir_saludo_basico(usuario)
     voice_params = _get_voice_params(usuario)
 
+    # Saludo con Polly
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/procesar",
+        action="/webhooks/voice/escuchar-recado",
         language="es-CL",
-        speech_timeout="auto",
-        timeout=5,
+        speech_timeout=5,
+        timeout=10,
     )
     gather.say(saludo, **voice_params)
     respuesta.append(gather)
 
-    nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
-    respuesta.say(
-        f"No pude escuchar nada. Intenta llamar a {nombre_owner} más tarde. Adiós.",
-        **voice_params,
-    )
+    # Si no hablan
+    respuesta.say("No se recibio mensaje. Adios.", **voice_params)
 
     return Response(content=str(respuesta), media_type="application/xml")
 
 
 # ═══════════════════════════════════════════════════════════
-# MODO 2: CONTESTADORA (audio grabado + IA solo escucha)
+# MODO 2: CONTESTADORA (Pro conocidos / modo luna)
+# Tu voz grabada, IA solo escucha
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_contestadora(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
-    """Reproduce el audio grabado del usuario. La IA NO habla, solo escucha.
-
-    Flujo:
-    1. <Play> → Audio grabado por el usuario ("Hola, soy Juan, dejame tu mensaje...")
-    2. <Record> → Graba lo que dice el llamante (como contestadora clásica)
-    3. Al colgar → /status analiza la grabación y envía resumen WhatsApp
-
-    Alternativa si no hay audio: genera saludo con TTS y escucha.
-    """
+def _responder_contestadora(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
+    """Reproduce el audio grabado del usuario, luego solo escucha."""
     respuesta = VoiceResponse()
     respuesta.pause(length=1)
 
     if usuario and usuario.audio_saludo_url:
-        # Reproducir el audio grabado del usuario (su voz real → genera confianza)
-        audio_url = f"{base_url}{usuario.audio_saludo_url}"
+        audio_url = usuario.audio_saludo_url
+        if not audio_url.startswith("http"):
+            audio_url = f"{base_url}{audio_url}"
         respuesta.play(audio_url)
     else:
-        # Fallback: generar saludo personalizado con TTS
+        # Fallback a Polly si no hay audio grabado
         nombre = (usuario.nombre if usuario else None) or settings.OWNER_NAME
         voice_params = _get_voice_params(usuario)
-        if evento_calendario:
-            saludo_fallback = (
-                f"Hola, soy {nombre}. Estoy en una reunión y no puedo contestar. "
-                "Deja tu nombre, el motivo de tu llamada, "
-                "y te devuelvo el llamado apenas termine. Gracias."
-            )
-        else:
-            saludo_fallback = (
-                f"Hola, soy {nombre}. No puedo atender en este momento. "
-                "Por favor, deja tu nombre, el motivo de tu llamada "
-                "y te devolveré el llamado. Gracias."
-            )
-        respuesta.say(saludo_fallback, **voice_params)
+        saludo = (
+            f"Hola, soy {nombre}. No puedo atender en este momento. "
+            "Por favor, deja tu nombre y el motivo de tu llamada. "
+            "Te devuelvo el llamado apenas pueda. Gracias."
+        )
+        respuesta.say(saludo, **voice_params)
 
-    # Escuchar lo que dice el llamante (no IA, solo grabar)
-    # Usamos Gather en vez de Record para obtener transcripción
+    # Solo escuchar el recado (IA no habla)
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/contestadora-escuchar",
+        action="/webhooks/voice/escuchar-recado",
         language="es-CL",
         speech_timeout=5,
         timeout=10,
     )
     respuesta.append(gather)
 
-    # Si no hablan, despedirse
-    respuesta.say("No se recibió mensaje. Adiós.", language="es-CL", voice="Polly.Mia")
+    respuesta.say("No se recibio mensaje. Adios.", language="es-CL", voice="Polly.Mia")
 
     return Response(content=str(respuesta), media_type="application/xml")
 
 
 # ═══════════════════════════════════════════════════════════
-# MODO 3: HÍBRIDO (audio grabado + IA conversa después)
+# MODO 3: SECRETARIA IA (Premium)
+# Tu voz saluda + IA conversa como secretaria
 # ═══════════════════════════════════════════════════════════
 
-def _responder_modo_hibrido(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
-    """Reproduce el audio del usuario como saludo, luego la IA toma el control.
-
-    Flujo:
-    1. <Play> → Audio grabado del usuario
-    2. <Gather> → Escucha respuesta del llamante
-    3. → /webhooks/voice/procesar → La IA conversa normalmente desde aquí
-    """
+def _responder_secretaria_ia(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
+    """Tu voz saluda, luego la IA conversa como secretaria."""
     respuesta = VoiceResponse()
     respuesta.pause(length=1)
 
     if usuario and usuario.audio_saludo_url:
-        audio_url = f"{base_url}{usuario.audio_saludo_url}"
+        audio_url = usuario.audio_saludo_url
+        if not audio_url.startswith("http"):
+            audio_url = f"{base_url}{audio_url}"
         respuesta.play(audio_url)
     else:
-        nombre = (usuario.nombre if usuario else None) or settings.OWNER_NAME
+        # Si no tiene audio, la IA saluda directamente
+        nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofia"
+        nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
         voice_params = _get_voice_params(usuario)
-        respuesta.say(
-            f"Hola, te comunicas con {nombre}. ¿Con quién hablo y en qué te puedo ayudar?",
-            **voice_params,
-        )
 
-    # Después del audio, la IA toma el control
-    gather = Gather(
-        input="speech",
-        action="/webhooks/voice/procesar",
-        language="es-CL",
-        speech_timeout="auto",
-        timeout=5,
-    )
-    respuesta.append(gather)
-
-    respuesta.say(
-        "No pude escuchar nada. Intenta más tarde. Adiós.",
-        language="es-CL",
-        voice="Polly.Mia",
-    )
-
-    return Response(content=str(respuesta), media_type="application/xml")
-
-
-# ═══════════════════════════════════════════════════════════
-# PROCESAMIENTO DE TURNOS
-# ═══════════════════════════════════════════════════════════
-
-@router.api_route("/procesar", methods=["GET", "POST"])
-async def procesar_llamada(request: Request, SpeechResult: str = Form("")):
-    """Procesa cada turno de la conversación (modo IA e híbrido).
-
-    Usa el prompt_personalizado del usuario para guiar las respuestas.
-    """
-    form_data = await request.form()
-    call_sid = form_data.get("CallSid", "unknown")
-    numero_destino = form_data.get("To", "")
-    base_url = str(request.base_url).rstrip("/")
-
-    logger.info(f"🎤 [{call_sid}] Llamante: {SpeechResult}")
-
-    usuario = _obtener_usuario_por_numero_twilio(numero_destino)
-
-    conv = call_manager.obtener_llamada(call_sid)
-    if not conv:
-        conv = call_manager.iniciar_llamada(call_sid)
-
-    conv.agregar_mensaje_usuario(SpeechResult)
-
-    # Generar respuesta con prompt personalizado (incluye contexto calendario si aplica)
-    system_prompt = _construir_system_prompt(usuario)
-    from app.services.llm_service import openai_client
-    from app.core.config import settings as app_settings
-
-    mensajes = [{"role": "system", "content": system_prompt}]
-    mensajes.extend(conv.historial)
-
-    try:
-        completion = openai_client.chat.completions.create(
-            model=app_settings.OPENAI_MODEL,
-            messages=mensajes,
-            max_tokens=200,
-            temperature=0.7,
-        )
-        texto_ia = completion.choices[0].message.content.strip()
-    except Exception as e:
-        logger.error(f"Error LLM: {e}")
-        texto_ia = "Disculpa, tuve un problema técnico. ¿Podrías repetir?"
-
-    conv.agregar_mensaje_asistente(texto_ia)
-    logger.info(f"🤖 [{call_sid}] Respuesta: {texto_ia}")
-
-    # Responder con la voz correcta
-    respuesta = VoiceResponse()
-
-    if usuario and usuario.voz_tipo == TipoVoz.ELEVENLABS.value and usuario.voz_elevenlabs_id:
-        from app.services.tts_service import _generar_audio_elevenlabs
-        audio_url = _generar_audio_elevenlabs(texto_ia, usuario.voz_elevenlabs_id, base_url)
-        if audio_url:
-            respuesta.play(audio_url)
+        if evento_calendario:
+            saludo = (
+                f"Hola, soy {nombre_asistente}, secretaria de {nombre_owner}. "
+                f"En este momento esta en una reunion. "
+                "¿Con quien hablo y en que puedo ayudarte?"
+            )
         else:
-            respuesta.say(texto_ia, **_get_voice_params(usuario))
-    else:
-        respuesta.say(texto_ia, **_get_voice_params(usuario))
+            saludo = (
+                f"Hola, soy {nombre_asistente}, secretaria de {nombre_owner}. "
+                f"En este momento no puede atender. "
+                "¿Con quien hablo y en que puedo ayudarte?"
+            )
+        respuesta.say(saludo, **voice_params)
 
-    # Seguir escuchando
+    # La IA conversa
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/procesar",
+        action="/webhooks/voice/secretaria-procesar",
         language="es-CL",
         speech_timeout="auto",
         timeout=5,
@@ -393,24 +317,28 @@ async def procesar_llamada(request: Request, SpeechResult: str = Form("")):
     respuesta.append(gather)
 
     respuesta.say(
-        "Parece que se cortó. Que tengas buen día, adiós.",
+        "No pude escuchar nada. Que tengas buen dia, adios.",
         **_get_voice_params(usuario),
     )
 
     return Response(content=str(respuesta), media_type="application/xml")
 
 
-@router.api_route("/contestadora-escuchar", methods=["GET", "POST"])
-async def contestadora_escuchar(request: Request, SpeechResult: str = Form("")):
-    """Recibe lo que dijo el llamante en modo contestadora.
+# ═══════════════════════════════════════════════════════════
+# ESCUCHAR RECADO (Free + Pro: IA no habla)
+# ═══════════════════════════════════════════════════════════
 
-    La IA NO responde. Solo guarda la transcripción.
-    Opcionalmente, sigue escuchando por si quieren decir más.
+@router.api_route("/escuchar-recado", methods=["GET", "POST"])
+async def escuchar_recado(request: Request, SpeechResult: str = Form("")):
+    """Recibe lo que dijo el llamante. IA NO responde. Solo transcribe.
+
+    Sigue escuchando por si quieren agregar algo más.
+    Usado por ASISTENTE_BASICO y CONTESTADORA.
     """
     form_data = await request.form()
     call_sid = form_data.get("CallSid", "unknown")
 
-    logger.info(f"📝 [{call_sid}] Contestadora recibió: {SpeechResult}")
+    logger.info(f"[{call_sid}] Recado: {SpeechResult}")
 
     conv = call_manager.obtener_llamada(call_sid)
     if not conv:
@@ -418,16 +346,13 @@ async def contestadora_escuchar(request: Request, SpeechResult: str = Form("")):
 
     conv.agregar_mensaje_usuario(SpeechResult)
 
-    # NO generar respuesta IA. Solo confirmar y seguir escuchando.
     respuesta = VoiceResponse()
-
-    # Dar un breve "beep" o pausa para indicar que sigue grabando
     respuesta.pause(length=1)
 
-    # Seguir escuchando por si quieren agregar algo más
+    # Seguir escuchando por si agregan más
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/contestadora-escuchar",
+        action="/webhooks/voice/escuchar-recado",
         language="es-CL",
         speech_timeout=3,
         timeout=5,
@@ -445,6 +370,75 @@ async def contestadora_escuchar(request: Request, SpeechResult: str = Form("")):
 
 
 # ═══════════════════════════════════════════════════════════
+# SECRETARIA PROCESAR (Premium: IA conversa)
+# ═══════════════════════════════════════════════════════════
+
+@router.api_route("/secretaria-procesar", methods=["GET", "POST"])
+async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
+    """Procesa turnos de conversación de la secretaria IA (Premium).
+
+    La IA escucha, responde, y sigue conversando hasta que cuelguen.
+    """
+    form_data = await request.form()
+    call_sid = form_data.get("CallSid", "unknown")
+    numero_destino = form_data.get("To", "")
+
+    logger.info(f"[{call_sid}] Secretaria recibe: {SpeechResult}")
+
+    usuario = _obtener_usuario_por_numero_twilio(numero_destino)
+
+    conv = call_manager.obtener_llamada(call_sid)
+    if not conv:
+        conv = call_manager.iniciar_llamada(call_sid)
+
+    conv.agregar_mensaje_usuario(SpeechResult)
+
+    # Generar respuesta IA
+    system_prompt = _construir_system_prompt_secretaria(usuario)
+    from app.services.llm_service import openai_client
+    from app.core.config import settings as app_settings
+
+    mensajes = [{"role": "system", "content": system_prompt}]
+    mensajes.extend(conv.historial)
+
+    try:
+        completion = openai_client.chat.completions.create(
+            model=app_settings.OPENAI_MODEL,
+            messages=mensajes,
+            max_tokens=200,
+            temperature=0.7,
+        )
+        texto_ia = completion.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Error LLM: {e}")
+        texto_ia = "Disculpa, tuve un problema tecnico. ¿Podrias repetir?"
+
+    conv.agregar_mensaje_asistente(texto_ia)
+    logger.info(f"[{call_sid}] Secretaria: {texto_ia}")
+
+    # Responder con Polly
+    respuesta = VoiceResponse()
+    respuesta.say(texto_ia, **_get_voice_params(usuario))
+
+    # Seguir escuchando
+    gather = Gather(
+        input="speech",
+        action="/webhooks/voice/secretaria-procesar",
+        language="es-CL",
+        speech_timeout="auto",
+        timeout=5,
+    )
+    respuesta.append(gather)
+
+    respuesta.say(
+        "Parece que se corto. Que tengas buen dia, adios.",
+        **_get_voice_params(usuario),
+    )
+
+    return Response(content=str(respuesta), media_type="application/xml")
+
+
+# ═══════════════════════════════════════════════════════════
 # STATUS: ANÁLISIS POST-LLAMADA (igual para los 3 modos)
 # ═══════════════════════════════════════════════════════════
 
@@ -456,7 +450,7 @@ async def estado_llamada(request: Request):
     call_status = form_data.get("CallStatus", "unknown")
     call_duration = form_data.get("CallDuration", "0")
 
-    logger.info(f"📊 Estado {call_sid}: {call_status} ({call_duration}s)")
+    logger.info(f"Estado {call_sid}: {call_status} ({call_duration}s)")
 
     if call_status in ("completed", "busy", "no-answer", "failed", "canceled"):
         conv = call_manager.finalizar_llamada(call_sid)
@@ -466,9 +460,9 @@ async def estado_llamada(request: Request):
             llamada_db = db.query(Llamada).filter(Llamada.call_sid == call_sid).first()
 
             if conv and conv.transcripcion_completa.strip():
-                logger.info(f"🧠 Analizando llamada {call_sid}...")
+                logger.info(f"Analizando llamada {call_sid}...")
                 analisis = analizar_llamada(conv.transcripcion_completa)
-                logger.info(f"📋 Análisis: {analisis}")
+                logger.info(f"Analisis: {analisis}")
 
                 if llamada_db:
                     llamada_db.estado = EstadoLlamada.FINALIZADA.value

@@ -56,9 +56,9 @@ class ModoFiltrado(str, enum.Enum):
 
 
 class ModoAsistente(str, enum.Enum):
-    IA_CONVERSACIONAL = "ia_conversacional"  # Sofía conversa con el llamante (default)
-    CONTESTADORA = "contestadora"            # Audio grabado del usuario + IA solo escucha
-    HIBRIDO = "hibrido"                      # Audio grabado como saludo + IA toma el control después
+    ASISTENTE_BASICO = "asistente_basico"    # Free: Polly saluda, IA solo escucha y transcribe
+    CONTESTADORA = "contestadora"            # Pro: Tu voz grabada como saludo, IA solo escucha
+    SECRETARIA_IA = "secretaria_ia"          # Premium: Tu voz saluda + IA conversa como secretaria
 
 
 class CalendarioModo(str, enum.Enum):
@@ -92,7 +92,8 @@ class Usuario(Base):
     nombre = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     telefono = Column(String(20), unique=True, nullable=False)
-    telefono_twilio = Column(String(20), nullable=True)
+    telefono_twilio = Column(String(20), nullable=True)      # Número Twilio asignado
+    twilio_phone_sid = Column(String(50), nullable=True)       # SID del número Twilio (para gestión)
     password_hash = Column(String(256), nullable=False)
     creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     activo = Column(Boolean, default=True)
@@ -106,7 +107,7 @@ class Usuario(Base):
     # Configuración del asistente
     nombre_asistente = Column(String(50), default="Sofía")
     modo_filtrado = Column(String(20), default=ModoFiltrado.DESCONOCIDOS.value)
-    modo_asistente = Column(String(30), default=ModoAsistente.IA_CONVERSACIONAL.value)
+    modo_asistente = Column(String(30), default=ModoAsistente.ASISTENTE_BASICO.value)
     horario_luna_inicio = Column(String(5), nullable=True)  # "23:00"
     horario_luna_fin = Column(String(5), nullable=True)      # "07:00"
 
@@ -314,7 +315,7 @@ def get_db():
 
 
 def seed_voces_y_planes(db):
-    """Poblar voces y planes iniciales si la DB está vacía."""
+    """Poblar voces Polly y planes iniciales si la DB está vacía."""
 
     if db.query(VozDisponible).count() == 0:
         voces = [
@@ -323,40 +324,67 @@ def seed_voces_y_planes(db):
             VozDisponible(nombre="Lupe", descripcion="Femenina, español mexicano amigable", idioma="es-MX", genero="femenino", tipo="polly", polly_voice_id="Polly.Lupe", plan_minimo="free", orden=3),
             VozDisponible(nombre="Miguel", descripcion="Masculina, español neutro profesional", idioma="es-US", genero="masculino", tipo="polly", polly_voice_id="Polly.Miguel", plan_minimo="free", orden=4),
             VozDisponible(nombre="Andrés", descripcion="Masculina, español mexicano formal", idioma="es-MX", genero="masculino", tipo="polly", polly_voice_id="Polly.Andres", plan_minimo="free", orden=5),
-            VozDisponible(nombre="Valentina", descripcion="IA ultra-realista femenina, natural y cálida", idioma="es-CL", genero="femenino", tipo="elevenlabs", elevenlabs_voice_id="oJIuRMopN0sojGjwD6rQ", plan_minimo="pro", orden=10),
-            VozDisponible(nombre="Mateo", descripcion="IA ultra-realista masculina, profesional", idioma="es-CL", genero="masculino", tipo="elevenlabs", elevenlabs_voice_id="pNInz6obpgDQGcFmaJgB", plan_minimo="pro", orden=11),
-            VozDisponible(nombre="Isabella", descripcion="IA premium femenina, elegante y sofisticada", idioma="es-CL", genero="femenino", tipo="elevenlabs", elevenlabs_voice_id="EXAVITQu4vr4xnSDxMaL", plan_minimo="pro", orden=12),
         ]
         db.add_all(voces)
 
-    if db.query(Plan).count() == 0:
-        planes = [
-            Plan(
-                codigo="free", nombre="Gratis", precio_mensual_usd=0, precio_anual_usd=0,
-                llamadas_mes=30, minutos_mes=60,
-                voces_polly=True, voces_elevenlabs=False, voz_personalizada=False,
-                modo_luna=False, analisis_avanzado=False, prioridad_soporte=False,
-                descripcion="Contestadora IA para llamadas desconocidas",
-                features_json=["30 llamadas/mes", "60 min de filtrado", "5 voces estándar", "Resumen WhatsApp", "Modo desconocidos"],
-            ),
-            Plan(
-                codigo="pro", nombre="Pro", precio_mensual_usd=4.99, precio_anual_usd=49.99,
-                llamadas_mes=200, minutos_mes=500,
-                voces_polly=True, voces_elevenlabs=True, voz_personalizada=True,
-                modo_luna=True, analisis_avanzado=True, prioridad_soporte=False,
-                destacado=True,
-                descripcion="Graba tu propia contestadora + modo luna",
-                features_json=["200 llamadas/mes", "500 min de filtrado", "Voces IA ElevenLabs", "Graba tu contestadora", "Prompt personalizado", "Modo Luna", "Análisis avanzado", "Google Calendar + Outlook"],
-            ),
-            Plan(
-                codigo="premium", nombre="Premium", precio_mensual_usd=12.99, precio_anual_usd=129.99,
-                llamadas_mes=9999, minutos_mes=9999,
-                voces_polly=True, voces_elevenlabs=True, voz_personalizada=True,
-                modo_luna=True, analisis_avanzado=True, prioridad_soporte=True,
-                descripcion="Todo ilimitado + soporte prioritario",
-                features_json=["Llamadas ilimitadas", "Minutos ilimitados", "Todas las voces", "Graba tu contestadora", "Prompt personalizado", "Modo Luna con horario", "Google Calendar + Outlook", "Soporte prioritario"],
-            ),
-        ]
-        db.add_all(planes)
+    # Actualizar planes existentes o crear nuevos
+    planes_config = [
+        {
+            "codigo": "free", "nombre": "Gratis", "precio_mensual_usd": 0, "precio_anual_usd": 0,
+            "llamadas_mes": 30, "minutos_mes": 60,
+            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": False,
+            "modo_luna": False, "analisis_avanzado": False, "prioridad_soporte": False,
+            "descripcion": "Asistente IA básica para llamadas desconocidas",
+            "features_json": [
+                "30 llamadas/mes",
+                "Voz Polly saluda y pide recado",
+                "IA escucha y transcribe",
+                "Resumen por WhatsApp",
+                "Categorización y prioridad",
+                "Modo desconocidos",
+            ],
+        },
+        {
+            "codigo": "pro", "nombre": "Pro", "precio_mensual_usd": 4.99, "precio_anual_usd": 49.99,
+            "llamadas_mes": 200, "minutos_mes": 500,
+            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
+            "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": False,
+            "destacado": True,
+            "descripcion": "Tu voz grabada + modo Luna para filtrar todo",
+            "features_json": [
+                "200 llamadas/mes",
+                "Graba tu propia contestadora",
+                "Desconocidos: Polly | Conocidos: tu voz",
+                "Modo Luna (no molestar total)",
+                "Categorización avanzada",
+                "Prompt personalizado",
+            ],
+        },
+        {
+            "codigo": "premium", "nombre": "Premium", "precio_mensual_usd": 9.99, "precio_anual_usd": 99.99,
+            "llamadas_mes": 9999, "minutos_mes": 9999,
+            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
+            "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": True,
+            "descripcion": "Secretaria IA que conversa, agenda y gestiona",
+            "features_json": [
+                "Llamadas ilimitadas",
+                "Secretaria IA conversa con llamantes",
+                "Consulta tu calendario en tiempo real",
+                "Agenda reuniones automáticamente",
+                "Horarios personalizados",
+                "Google Calendar + Outlook",
+                "Soporte prioritario",
+            ],
+        },
+    ]
+
+    for plan_data in planes_config:
+        plan_existente = db.query(Plan).filter(Plan.codigo == plan_data["codigo"]).first()
+        if plan_existente:
+            for key, val in plan_data.items():
+                if key != "codigo":
+                    setattr(plan_existente, key if key != "precio_mensual_usd" else "precio_mensual_usd", val)
+        else:
+            db.add(Plan(**plan_data))
 
     db.commit()

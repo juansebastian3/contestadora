@@ -122,7 +122,7 @@ class GuardarPromptRequest(BaseModel):
 
 
 class CambiarModoAsistenteRequest(BaseModel):
-    modo: str = Field(..., examples=["ia_conversacional"])  # ia_conversacional | contestadora | hibrido
+    modo: str = Field(..., examples=["asistente_basico"])  # asistente_basico | contestadora | secretaria_ia
 
 
 class PersonalizacionResponse(BaseModel):

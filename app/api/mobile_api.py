@@ -291,12 +291,13 @@ async def obtener_perfil(usuario: Usuario = Depends(get_current_user)):
             "solo_importantes": usuario.notif_solo_importantes,
         },
         "personalizacion": {
-            "modo_asistente": usuario.modo_asistente or "ia_conversacional",
+            "modo_asistente": usuario.modo_asistente or "asistente_basico",
             "prompt_personalizado": usuario.prompt_personalizado,
             "tiene_audio_saludo": bool(usuario.audio_saludo_url),
             "audio_saludo_url": usuario.audio_saludo_url,
             "audio_saludo_duracion": usuario.audio_saludo_duracion,
         },
+        "telefono_twilio": usuario.telefono_twilio,
         "contactos_conocidos_count": len(usuario.contactos_conocidos or []),
         "calendario": {
             "google_conectado": bool(usuario.google_calendar_token),
@@ -359,7 +360,7 @@ async def actualizar_contactos(
 async def obtener_personalizacion(usuario: Usuario = Depends(get_current_user)):
     """Obtener configuración de personalización del asistente."""
     return PersonalizacionResponse(
-        modo_asistente=usuario.modo_asistente or ModoAsistente.IA_CONVERSACIONAL.value,
+        modo_asistente=usuario.modo_asistente or ModoAsistente.ASISTENTE_BASICO.value,
         prompt_personalizado=usuario.prompt_personalizado,
         audio_saludo_url=usuario.audio_saludo_url,
         audio_saludo_duracion=usuario.audio_saludo_duracion,
@@ -404,23 +405,31 @@ async def cambiar_modo_asistente(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Cambiar el modo del asistente: ia_conversacional, contestadora, hibrido.
+    """Cambiar el modo del asistente: asistente_basico, contestadora, secretaria_ia.
 
-    - ia_conversacional: Sofía conversa normalmente con el llamante
-    - contestadora: Reproduce audio grabado del usuario, IA solo escucha y transcribe
-    - hibrido: Reproduce audio grabado como saludo, luego IA toma el control
+    - asistente_basico: Polly saluda, IA solo escucha y transcribe (Free)
+    - contestadora: Tu voz grabada como saludo, IA solo escucha (Pro)
+    - secretaria_ia: Tu voz saluda + IA conversa como secretaria (Premium)
     """
     modos_validos = [m.value for m in ModoAsistente]
     if data.modo not in modos_validos:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Opciones: {modos_validos}")
 
-    # Contestadora e híbrido requieren audio grabado
-    if data.modo in (ModoAsistente.CONTESTADORA.value, ModoAsistente.HIBRIDO.value):
+    # Contestadora y secretaria_ia requieren audio grabado
+    if data.modo in (ModoAsistente.CONTESTADORA.value, ModoAsistente.SECRETARIA_IA.value):
         if not usuario.audio_saludo_url:
             raise HTTPException(
                 status_code=400,
-                detail="Para usar modo contestadora o híbrido, primero sube tu audio de saludo."
+                detail="Para usar modo contestadora o secretaria IA, primero sube tu audio de saludo."
             )
+
+    # Verificar plan requerido
+    if data.modo == ModoAsistente.CONTESTADORA.value:
+        if usuario.plan not in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+            raise HTTPException(status_code=403, detail="El modo contestadora requiere plan Pro o Premium.")
+    elif data.modo == ModoAsistente.SECRETARIA_IA.value:
+        if usuario.plan != PlanTipo.PREMIUM.value:
+            raise HTTPException(status_code=403, detail="El modo secretaria IA requiere plan Premium.")
 
     usuario.modo_asistente = data.modo
     db.commit()
@@ -481,7 +490,7 @@ async def borrar_audio_saludo(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Eliminar audio de saludo. Si el modo es contestadora/híbrido, vuelve a ia_conversacional."""
+    """Eliminar audio de saludo. Si el modo requiere audio, vuelve a asistente_basico."""
     if usuario.audio_saludo_url:
         # Intentar borrar archivo físico
         upload_dir = Path(f"./audio_uploads/{usuario.uid}")
@@ -492,8 +501,8 @@ async def borrar_audio_saludo(
     usuario.audio_saludo_duracion = None
 
     # Si estaba en modo que requiere audio, volver a IA conversacional
-    if usuario.modo_asistente in (ModoAsistente.CONTESTADORA.value, ModoAsistente.HIBRIDO.value):
-        usuario.modo_asistente = ModoAsistente.IA_CONVERSACIONAL.value
+    if usuario.modo_asistente in (ModoAsistente.CONTESTADORA.value, ModoAsistente.SECRETARIA_IA.value):
+        usuario.modo_asistente = ModoAsistente.ASISTENTE_BASICO.value
 
     db.commit()
     return {"status": "ok", "modo_asistente": usuario.modo_asistente}
@@ -888,3 +897,63 @@ async def obtener_url_suscripcion(
 async def health_check():
     """Health check. Público."""
     return {"status": "healthy", "version": "1.0.0", "service": "FiltroLlamadas API"}
+
+
+# ═══════════════════════════════════════════════════════════
+# NUMERO TWILIO (auto-provisioning)
+# ═══════════════════════════════════════════════════════════
+
+@router.get("/mi-numero")
+async def obtener_mi_numero(
+    usuario: Usuario = Depends(get_current_user),
+):
+    """Obtiene el numero Twilio asignado al usuario."""
+    return {
+        "telefono_twilio": usuario.telefono_twilio,
+        "tiene_numero": bool(usuario.telefono_twilio),
+        "instrucciones": (
+            "Configura desvio de llamadas en tu celular hacia este numero. "
+            "Las llamadas desviadas seran atendidas por tu asistente IA."
+        ) if usuario.telefono_twilio else (
+            "Necesitas un plan activo para recibir un numero. "
+            "Suscribete a un plan para obtener tu numero Twilio automaticamente."
+        ),
+    }
+
+
+@router.post("/mi-numero/asignar")
+async def asignar_mi_numero(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Asigna un numero Twilio al usuario. Se ejecuta automaticamente al activar plan.
+
+    Body opcional: {codigo_pais: "US"} (default US)
+    """
+    from app.services.twilio_numbers import asignar_numero_a_usuario
+
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    codigo_pais = body.get("codigo_pais", "US")
+
+    resultado = asignar_numero_a_usuario(db, usuario, codigo_pais)
+    if not resultado:
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo asignar un numero Twilio. Intenta de nuevo mas tarde."
+        )
+
+    return {
+        "status": "ok",
+        "telefono_twilio": resultado["phone_number"],
+        "ya_asignado": resultado.get("ya_asignado", False),
+        "instrucciones": (
+            "Configura desvio de llamadas en tu celular hacia este numero. "
+            "Las llamadas desviadas seran atendidas por tu asistente IA."
+        ),
+    }
