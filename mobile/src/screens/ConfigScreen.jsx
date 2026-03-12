@@ -1,5 +1,5 @@
 /**
- * ConfigScreen - Configuración y estado del sistema (conectada al backend)
+ * ConfigScreen - Configuracion, numero Twilio y guia de desvio de llamadas
  */
 import React, { useState, useEffect } from "react";
 import {
@@ -11,14 +11,46 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
+  Linking,
+  Clipboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius } from "../utils/theme";
 import api from "../services/api";
 
+// ─── Codigos GSM estandar de desvio ─────────────────────
+const CODIGOS_DESVIO = [
+  {
+    key: "no_contesta",
+    titulo: "Si no contesto",
+    descripcion: "Desvia cuando no contestas despues de ~20 segundos. El mas recomendado.",
+    codigoActivar: (num) => `**61*${num}#`,
+    codigoDesactivar: "##61#",
+    recomendado: true,
+  },
+  {
+    key: "sin_senal",
+    titulo: "Sin senal / apagado",
+    descripcion: "Desvia cuando tu celular esta apagado o sin cobertura.",
+    codigoActivar: (num) => `**62*${num}#`,
+    codigoDesactivar: "##62#",
+    recomendado: true,
+  },
+  {
+    key: "ocupado",
+    titulo: "Linea ocupada",
+    descripcion: "Desvia cuando estas en otra llamada.",
+    codigoActivar: (num) => `**67*${num}#`,
+    codigoDesactivar: "##67#",
+    recomendado: false,
+  },
+];
+
 export default function ConfigScreen() {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [guiaAbierta, setGuiaAbierta] = useState(false);
   const [settings, setSettings] = useState({
     notifWhatsapp: true,
     notifPush: true,
@@ -39,7 +71,6 @@ export default function ConfigScreen() {
         notifSoloImportantes: data.notificaciones?.solo_importantes ?? false,
       });
     } catch (e) {
-      // Cargar perfil guardado localmente como fallback
       const saved = await api.getSavedProfile();
       if (saved) setPerfil(saved);
     } finally {
@@ -53,31 +84,60 @@ export default function ConfigScreen() {
     try {
       await api.updateConfig(configKey, String(newValue));
     } catch (e) {
-      // Revertir si falla
       setSettings((s) => ({ ...s, [key]: !newValue }));
     }
   }
 
   async function handleLogout() {
     Alert.alert(
-      "Cerrar sesión",
-      "¿Seguro que quieres cerrar sesión?",
+      "Cerrar sesion",
+      "Seguro que quieres cerrar sesion?",
       [
         { text: "Cancelar", style: "cancel" },
         {
-          text: "Cerrar sesión",
+          text: "Cerrar sesion",
           style: "destructive",
           onPress: async () => {
             await api.logout();
-            // La app detectará que no hay token y mostrará login
-            // Forzar un re-render navegando (en producción usarías un context global)
-            // Por ahora el flujo de App.jsx maneja esto
           },
         },
       ]
     );
   }
 
+  // ─── Abrir marcador con codigo GSM ──────────────────────
+  function abrirMarcador(codigo) {
+    const url = `tel:${encodeURIComponent(codigo)}`;
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert("No disponible", "No se puede abrir el marcador en este dispositivo.");
+      }
+    });
+  }
+
+  function copiarCodigo(codigo) {
+    Clipboard.setString(codigo);
+    Alert.alert("Copiado", `Codigo copiado: ${codigo}`);
+  }
+
+  function cancelarTodosDesvios() {
+    Alert.alert(
+      "Cancelar desvios",
+      "Esto desactivara todos los desvios de llamadas. Tu asistente dejara de recibir llamadas.",
+      [
+        { text: "No, mantener", style: "cancel" },
+        {
+          text: "Si, cancelar desvios",
+          style: "destructive",
+          onPress: () => abrirMarcador("##002#"),
+        },
+      ]
+    );
+  }
+
+  // ─── Componentes auxiliares ─────────────────────────────
   const Section = ({ title, children }) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -120,10 +180,12 @@ export default function ConfigScreen() {
     desactivado: "Desactivado",
   };
 
+  const numeroTwilio = perfil?.telefono_twilio;
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Configuración</Text>
+        <Text style={styles.title}>Configuracion</Text>
       </View>
 
       {/* Estado del sistema */}
@@ -151,19 +213,127 @@ export default function ConfigScreen() {
         </View>
       )}
 
-      {/* Numero Twilio */}
+      {/* ═══ NUMERO TWILIO + GUIA DE DESVIO ═══ */}
       {perfil && (
         <View style={styles.twilioCard}>
           <View style={styles.twilioHeader}>
-            <Ionicons name="call" size={22} color={perfil.telefono_twilio ? colors.accentGreen : colors.textMuted} />
+            <Ionicons name="call" size={22} color={numeroTwilio ? colors.accentGreen : colors.textMuted} />
             <Text style={styles.twilioTitle}>Tu numero de asistente</Text>
           </View>
-          {perfil.telefono_twilio ? (
+
+          {numeroTwilio ? (
             <>
-              <Text style={styles.twilioNumber}>{perfil.telefono_twilio}</Text>
-              <Text style={styles.twilioDesc}>
-                Configura desvio de llamadas en tu celular hacia este numero. Las llamadas desviadas seran atendidas por tu asistente IA.
-              </Text>
+              <Text style={styles.twilioNumber}>{numeroTwilio}</Text>
+
+              {/* Boton para abrir guia */}
+              <TouchableOpacity
+                style={styles.guiaButton}
+                onPress={() => setGuiaAbierta(!guiaAbierta)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={guiaAbierta ? "chevron-up" : "chevron-down"} size={18} color={colors.primary} />
+                <Text style={styles.guiaButtonText}>
+                  {guiaAbierta ? "Ocultar guia de configuracion" : "Como configuro el desvio de llamadas?"}
+                </Text>
+              </TouchableOpacity>
+
+              {/* GUIA EXPANDIBLE */}
+              {guiaAbierta && (
+                <View style={styles.guiaContainer}>
+                  {/* Explicacion */}
+                  <View style={styles.guiaIntro}>
+                    <Ionicons name="information-circle" size={20} color={colors.primary} />
+                    <Text style={styles.guiaIntroText}>
+                      Debes marcar estos codigos en el teclado de tu telefono (como si fueras a llamar). Tu operador confirmara que el desvio quedo activo.
+                    </Text>
+                  </View>
+
+                  {/* Paso a paso */}
+                  <View style={styles.pasosContainer}>
+                    <View style={styles.paso}>
+                      <View style={styles.pasoNumero}><Text style={styles.pasoNumeroText}>1</Text></View>
+                      <Text style={styles.pasoText}>Abre la app <Text style={styles.bold}>Telefono</Text> de tu celular</Text>
+                    </View>
+                    <View style={styles.paso}>
+                      <View style={styles.pasoNumero}><Text style={styles.pasoNumeroText}>2</Text></View>
+                      <Text style={styles.pasoText}>Ve al <Text style={styles.bold}>teclado numerico</Text> (donde marcas numeros)</Text>
+                    </View>
+                    <View style={styles.paso}>
+                      <View style={styles.pasoNumero}><Text style={styles.pasoNumeroText}>3</Text></View>
+                      <Text style={styles.pasoText}>Marca el codigo que quieras activar y presiona <Text style={styles.bold}>Llamar</Text></Text>
+                    </View>
+                  </View>
+
+                  {/* Codigos disponibles */}
+                  <Text style={styles.guiaSeccionTitulo}>Elige que tipo de desvio activar:</Text>
+
+                  {CODIGOS_DESVIO.map((desvio) => {
+                    const codigo = desvio.codigoActivar(numeroTwilio);
+                    return (
+                      <View key={desvio.key} style={[styles.desvioCard, desvio.recomendado && styles.desvioCardRecomendado]}>
+                        <View style={styles.desvioHeader}>
+                          <Text style={styles.desvioTitulo}>{desvio.titulo}</Text>
+                          {desvio.recomendado && (
+                            <View style={styles.recomendadoBadge}>
+                              <Text style={styles.recomendadoText}>Recomendado</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.desvioDesc}>{desvio.descripcion}</Text>
+
+                        {/* Codigo a marcar */}
+                        <View style={styles.codigoContainer}>
+                          <Text style={styles.codigoText}>{codigo}</Text>
+                          <TouchableOpacity onPress={() => copiarCodigo(codigo)} style={styles.copiarBtn}>
+                            <Ionicons name="copy-outline" size={16} color={colors.primary} />
+                          </TouchableOpacity>
+                        </View>
+
+                        {/* Botones de accion */}
+                        <View style={styles.desvioActions}>
+                          <TouchableOpacity
+                            style={styles.activarBtn}
+                            onPress={() => abrirMarcador(codigo)}
+                          >
+                            <Ionicons name="call-outline" size={16} color="#fff" />
+                            <Text style={styles.activarBtnText}>Activar</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.desactivarBtn}
+                            onPress={() => abrirMarcador(desvio.codigoDesactivar)}
+                          >
+                            <Text style={styles.desactivarBtnText}>Desactivar</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+
+                  {/* Tip de plataforma */}
+                  <View style={styles.tipCard}>
+                    <Ionicons name={Platform.OS === "ios" ? "logo-apple" : "logo-android"} size={18} color={colors.accent} />
+                    <Text style={styles.tipText}>
+                      {Platform.OS === "ios"
+                        ? 'En iPhone, el menu Ajustes > Telefono > Desvio solo controla desvio de TODAS las llamadas. Para desvio condicional (si no contestas) debes usar estos codigos GSM.'
+                        : 'En Android tambien puedes ir a Telefono > Ajustes > Desvio de llamadas > Desviar si no hay respuesta, y poner tu numero de asistente ahi directamente.'}
+                    </Text>
+                  </View>
+
+                  {/* Cancelar todos */}
+                  <TouchableOpacity style={styles.cancelarTodosBtn} onPress={cancelarTodosDesvios}>
+                    <Ionicons name="close-circle-outline" size={18} color={colors.accentRed} />
+                    <Text style={styles.cancelarTodosText}>Cancelar todos los desvios (##002#)</Text>
+                  </TouchableOpacity>
+
+                  {/* Nota sobre calendario */}
+                  <View style={styles.calendarNote}>
+                    <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+                    <Text style={styles.calendarNoteText}>
+                      Con el plan Premium, el Agente IA consulta tu calendario automaticamente. Si estas en reunion, le avisa al llamante y ofrece agendar una devolucion.
+                    </Text>
+                  </View>
+                </View>
+              )}
             </>
           ) : (
             <Text style={styles.twilioDesc}>
@@ -220,13 +390,13 @@ export default function ConfigScreen() {
 
       <Section title="Soporte">
         <SettingRow icon="help-circle" label="Ayuda" onPress={() => {}} />
-        <SettingRow icon="document-text" label="Términos y privacidad" onPress={() => {}} />
+        <SettingRow icon="document-text" label="Terminos y privacidad" onPress={() => {}} />
       </Section>
 
-      {/* Cerrar sesión */}
+      {/* Cerrar sesion */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color={colors.accentRed} />
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
+        <Text style={styles.logoutText}>Cerrar sesion</Text>
       </TouchableOpacity>
 
       <View style={{ height: 120 }} />
@@ -280,6 +450,7 @@ const styles = StyleSheet.create({
   settingLabel: { fontSize: fontSize.md, fontWeight: "500", color: colors.textPrimary },
   settingDesc: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
 
+  // ─── Twilio Card ───────────────────────────────────
   twilioCard: {
     backgroundColor: colors.bgCard, marginHorizontal: spacing.lg,
     borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.md,
@@ -290,6 +461,82 @@ const styles = StyleSheet.create({
   twilioNumber: { fontSize: fontSize.xl, fontWeight: "800", color: colors.accentGreen, marginBottom: 8, letterSpacing: 1 },
   twilioDesc: { fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 18 },
 
+  // ─── Guia de desvio ────────────────────────────────
+  guiaButton: { flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 6 },
+  guiaButtonText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: "600" },
+
+  guiaContainer: { marginTop: 8 },
+
+  guiaIntro: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    backgroundColor: colors.primary + "10", borderRadius: borderRadius.md,
+    padding: 12, marginBottom: 16,
+  },
+  guiaIntroText: { color: colors.textSecondary, fontSize: fontSize.sm, lineHeight: 20, flex: 1 },
+
+  pasosContainer: { marginBottom: 16 },
+  paso: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 10 },
+  pasoNumero: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: colors.primary, justifyContent: "center", alignItems: "center",
+  },
+  pasoNumeroText: { color: "#fff", fontSize: fontSize.sm, fontWeight: "700" },
+  pasoText: { color: colors.textSecondary, fontSize: fontSize.sm, flex: 1, lineHeight: 18 },
+  bold: { fontWeight: "700", color: colors.textPrimary },
+
+  guiaSeccionTitulo: { color: colors.textPrimary, fontSize: fontSize.md, fontWeight: "700", marginBottom: 10 },
+
+  desvioCard: {
+    backgroundColor: colors.bg, borderRadius: borderRadius.md,
+    padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border,
+  },
+  desvioCardRecomendado: { borderColor: colors.primary + "50" },
+  desvioHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  desvioTitulo: { color: colors.textPrimary, fontSize: fontSize.md, fontWeight: "600" },
+  recomendadoBadge: { backgroundColor: colors.accentGreen + "20", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  recomendadoText: { color: colors.accentGreen, fontSize: fontSize.xs, fontWeight: "600" },
+  desvioDesc: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 16, marginBottom: 10 },
+
+  codigoContainer: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: "#0f172a", borderRadius: borderRadius.sm, padding: 10, marginBottom: 10,
+  },
+  codigoText: { color: colors.accentGreen, fontSize: fontSize.md, fontWeight: "700", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", letterSpacing: 0.5 },
+  copiarBtn: { padding: 4 },
+
+  desvioActions: { flexDirection: "row", gap: 8 },
+  activarBtn: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    backgroundColor: colors.primary, borderRadius: borderRadius.sm, paddingVertical: 10,
+  },
+  activarBtnText: { color: "#fff", fontSize: fontSize.sm, fontWeight: "600" },
+  desactivarBtn: {
+    flex: 1, alignItems: "center", justifyContent: "center",
+    backgroundColor: colors.bgCardLight, borderRadius: borderRadius.sm, paddingVertical: 10,
+  },
+  desactivarBtnText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: "500" },
+
+  tipCard: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    backgroundColor: colors.accent + "10", borderRadius: borderRadius.md,
+    padding: 12, marginTop: 6, marginBottom: 10,
+  },
+  tipText: { color: colors.textSecondary, fontSize: fontSize.xs, lineHeight: 18, flex: 1 },
+
+  cancelarTodosBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    paddingVertical: 12, marginTop: 4, marginBottom: 8,
+  },
+  cancelarTodosText: { color: colors.accentRed, fontSize: fontSize.sm, fontWeight: "500" },
+
+  calendarNote: {
+    flexDirection: "row", alignItems: "flex-start", gap: 10,
+    backgroundColor: colors.primary + "08", borderRadius: borderRadius.md,
+    padding: 12, borderWidth: 1, borderColor: colors.primary + "15",
+  },
+  calendarNoteText: { color: colors.textSecondary, fontSize: fontSize.xs, lineHeight: 18, flex: 1 },
+
+  // ─── Otros ─────────────────────────────────────────
   logoutButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     marginHorizontal: spacing.lg, marginTop: spacing.xl,
