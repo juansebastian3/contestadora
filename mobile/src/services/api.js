@@ -361,6 +361,10 @@ const api = {
   getSuscripcionUrl: () => api.get("/api/v1/suscripcion/url"),
   getSuscripcionEstado: () => api.get("/api/v1/suscripcion/estado"),
 
+  // Numero Twilio
+  getMiNumero: () => api.get("/api/v1/mi-numero"),
+  asignarNumero: (codigo_pais) => api.post("/api/v1/mi-numero/asignar", { codigo_pais: codigo_pais || "US" }),
+
   // Health (público)
   health: () => api.get("/api/v1/health"),
 };

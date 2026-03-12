@@ -2,9 +2,9 @@
  * PersonalizacionScreen - Pantalla de personalización del asistente
  *
  * Permite al usuario:
- * 1. Elegir modo de asistente (IA Conversacional / Contestadora / Híbrido)
+ * 1. Elegir modo de asistente (Asistente Básico / Contestadora / Secretaria IA)
  * 2. Escribir un prompt personalizado para la IA
- * 3. Grabar audio de saludo con expo-av para modo contestadora
+ * 3. Grabar audio de saludo con expo-av para modo contestadora/secretaria
  */
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -24,27 +24,28 @@ import { colors, spacing, fontSize, borderRadius } from "../utils/theme";
 
 const MODOS = [
   {
-    key: "ia_conversacional",
-    titulo: "IA Conversacional",
-    icono: "🤖",
-    descripcion: "Sofía conversa con quien llame, responde preguntas y recopila información.",
+    key: "asistente_basico",
+    titulo: "Asistente Basico",
+    icono: "📞",
+    descripcion: "La IA saluda con voz Polly, escucha el recado y te envia un resumen. Plan Free.",
     requiereAudio: false,
+    planMinimo: "free",
   },
   {
     key: "contestadora",
-    titulo: "Contestadora",
-    icono: "📼",
-    descripcion:
-      "Reproduce tu audio grabado. La IA solo escucha lo que digan y te envía el resumen.",
+    titulo: "Contestadora Personal",
+    icono: "🎙️",
+    descripcion: "Tu voz grabada como saludo para conocidos. Polly saluda a desconocidos. La IA solo escucha.",
     requiereAudio: true,
+    planMinimo: "pro",
   },
   {
-    key: "hibrido",
-    titulo: "Híbrido",
-    icono: "🔀",
-    descripcion:
-      "Tu audio grabado como saludo inicial, luego la IA toma el control de la conversación.",
+    key: "secretaria_ia",
+    titulo: "Secretaria IA",
+    icono: "🤖",
+    descripcion: "Tu voz grabada como saludo + la IA conversa como tu secretaria personal. Agenda, calendario y mas.",
     requiereAudio: true,
+    planMinimo: "premium",
   },
 ];
 
@@ -52,7 +53,7 @@ const MAX_PROMPT_LENGTH = 2000;
 
 export default function PersonalizacionScreen() {
   // Estado general
-  const [modoActual, setModoActual] = useState("ia_conversacional");
+  const [modoActual, setModoActual] = useState("asistente_basico");
   const [prompt, setPrompt] = useState("");
   const [promptOriginal, setPromptOriginal] = useState("");
   const [tieneAudio, setTieneAudio] = useState(false);
@@ -103,7 +104,7 @@ export default function PersonalizacionScreen() {
   async function cargarPersonalizacion() {
     try {
       const data = await api.getPersonalizacion();
-      setModoActual(data.modo_asistente || "ia_conversacional");
+      setModoActual(data.modo_asistente || "asistente_basico");
       setPrompt(data.prompt_personalizado || "");
       setPromptOriginal(data.prompt_personalizado || "");
       setTieneAudio(!!data.audio_saludo_url);
@@ -250,7 +251,7 @@ export default function PersonalizacionScreen() {
   async function eliminarAudio() {
     Alert.alert(
       "Eliminar audio",
-      "Si estás en modo contestadora o híbrido, volverás a IA conversacional.",
+      "Si estas en modo contestadora o secretaria IA, volveras a asistente basico.",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -261,7 +262,7 @@ export default function PersonalizacionScreen() {
               const result = await api.borrarAudioSaludo();
               setTieneAudio(false);
               setAudioUrl(null);
-              setModoActual(result.modo_asistente || "ia_conversacional");
+              setModoActual(result.modo_asistente || "asistente_basico");
             } catch (e) {
               Alert.alert("Error", e.message);
             }
@@ -364,7 +365,7 @@ export default function PersonalizacionScreen() {
       <View style={styles.seccion}>
         <Text style={styles.seccionTitulo}>Audio de saludo</Text>
         <Text style={styles.seccionDesc}>
-          Graba tu propio saludo tipo contestadora. Se usará en los modos Contestadora e Híbrido.
+          Graba tu propio saludo. Se usa en los modos Contestadora y Secretaria IA.
         </Text>
 
         {subiendoAudio ? (

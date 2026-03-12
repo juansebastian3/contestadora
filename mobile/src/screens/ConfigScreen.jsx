@@ -151,6 +151,30 @@ export default function ConfigScreen() {
         </View>
       )}
 
+      {/* Numero Twilio */}
+      {perfil && (
+        <View style={styles.twilioCard}>
+          <View style={styles.twilioHeader}>
+            <Ionicons name="call" size={22} color={perfil.telefono_twilio ? colors.accentGreen : colors.textMuted} />
+            <Text style={styles.twilioTitle}>Tu numero de asistente</Text>
+          </View>
+          {perfil.telefono_twilio ? (
+            <>
+              <Text style={styles.twilioNumber}>{perfil.telefono_twilio}</Text>
+              <Text style={styles.twilioDesc}>
+                Configura desvio de llamadas en tu celular hacia este numero. Las llamadas desviadas seran atendidas por tu asistente IA.
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.twilioDesc}>
+              {perfil.plan === "free"
+                ? "Suscribete a un plan Pro o Premium para recibir tu numero de asistente automaticamente."
+                : "Tu numero sera asignado automaticamente. Si no lo ves, reinicia la app."}
+            </Text>
+          )}
+        </View>
+      )}
+
       <Section title="Filtrado">
         <SettingRow
           icon="shield-checkmark"
@@ -255,6 +279,16 @@ const styles = StyleSheet.create({
   settingInfo: { flex: 1 },
   settingLabel: { fontSize: fontSize.md, fontWeight: "500", color: colors.textPrimary },
   settingDesc: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+
+  twilioCard: {
+    backgroundColor: colors.bgCard, marginHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.md,
+    borderWidth: 1, borderColor: colors.primary + "30",
+  },
+  twilioHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  twilioTitle: { fontSize: fontSize.md, fontWeight: "600", color: colors.textPrimary, marginLeft: 10 },
+  twilioNumber: { fontSize: fontSize.xl, fontWeight: "800", color: colors.accentGreen, marginBottom: 8, letterSpacing: 1 },
+  twilioDesc: { fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 18 },
 
   logoutButton: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",

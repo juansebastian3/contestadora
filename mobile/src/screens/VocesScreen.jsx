@@ -15,13 +15,10 @@ import api from "../services/api";
 
 const DEMO_VOCES = [
   { id: 1, nombre: "Mia", descripcion: "Femenina, español neutro latinoamericano", genero: "femenino", tipo: "polly", plan_minimo: "free", es_premium: false },
-  { id: 2, nombre: "Conchita", descripcion: "Femenina, español castellano cálido", genero: "femenino", tipo: "polly", plan_minimo: "free", es_premium: false },
+  { id: 2, nombre: "Conchita", descripcion: "Femenina, español castellano calido", genero: "femenino", tipo: "polly", plan_minimo: "free", es_premium: false },
   { id: 3, nombre: "Lupe", descripcion: "Femenina, español mexicano amigable", genero: "femenino", tipo: "polly", plan_minimo: "free", es_premium: false },
   { id: 4, nombre: "Miguel", descripcion: "Masculina, español neutro profesional", genero: "masculino", tipo: "polly", plan_minimo: "free", es_premium: false },
-  { id: 5, nombre: "Andrés", descripcion: "Masculina, español mexicano formal", genero: "masculino", tipo: "polly", plan_minimo: "free", es_premium: false },
-  { id: 10, nombre: "Valentina", descripcion: "IA ultra-realista femenina, natural y cálida", genero: "femenino", tipo: "elevenlabs", plan_minimo: "pro", es_premium: true },
-  { id: 11, nombre: "Mateo", descripcion: "IA ultra-realista masculina, profesional", genero: "masculino", tipo: "elevenlabs", plan_minimo: "pro", es_premium: true },
-  { id: 12, nombre: "Isabella", descripcion: "IA premium femenina, elegante y sofisticada", genero: "femenino", tipo: "elevenlabs", plan_minimo: "pro", es_premium: true },
+  { id: 5, nombre: "Andres", descripcion: "Masculina, español mexicano formal", genero: "masculino", tipo: "polly", plan_minimo: "free", es_premium: false },
 ];
 
 export default function VocesScreen() {
@@ -33,8 +30,7 @@ export default function VocesScreen() {
     api.get("/api/v1/voces").then(setVoces).catch(() => setVoces(DEMO_VOCES));
   }, []);
 
-  const vocesGratis = voces.filter((v) => !v.es_premium);
-  const vocesPremium = voces.filter((v) => v.es_premium);
+  const vocesDisponibles = voces.filter((v) => v.tipo === "polly");
 
   const canSelect = (voz) => {
     const orden = { free: 0, pro: 1, premium: 2 };
@@ -78,10 +74,10 @@ export default function VocesScreen() {
         </View>
         <Text style={styles.voiceName}>{voz.nombre}</Text>
         <Text style={styles.voiceDesc} numberOfLines={2}>{voz.descripcion}</Text>
-        {voz.es_premium && (
+        {false && (
           <View style={styles.premiumBadge}>
             <Ionicons name="diamond" size={10} color={colors.primary} />
-            <Text style={styles.premiumText}>ElevenLabs</Text>
+            <Text style={styles.premiumText}>Premium</Text>
           </View>
         )}
         <TouchableOpacity style={styles.playBtn}>
@@ -98,33 +94,19 @@ export default function VocesScreen() {
         <Text style={styles.subtitle}>Elige cómo suena tu asistente</Text>
       </View>
 
-      {/* Voces Estándar */}
+      {/* Voces disponibles */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Estándar</Text>
+          <Text style={styles.sectionTitle}>Voces disponibles</Text>
           <View style={styles.freeBadge}>
-            <Text style={styles.freeText}>Gratis</Text>
-          </View>
-        </View>
-        <View style={styles.voicesGrid}>
-          {vocesGratis.map((v) => <VoiceCard key={v.id} voz={v} />)}
-        </View>
-      </View>
-
-      {/* Voces Premium */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ultra-realistas</Text>
-          <View style={[styles.freeBadge, { backgroundColor: colors.primary + "20" }]}>
-            <Ionicons name="diamond" size={10} color={colors.primary} />
-            <Text style={[styles.freeText, { color: colors.primary, marginLeft: 4 }]}>Pro</Text>
+            <Text style={styles.freeText}>Todos los planes</Text>
           </View>
         </View>
         <Text style={styles.premiumDesc}>
-          Voces de IA generadas por ElevenLabs. Suenan indistinguibles de una persona real.
+          Estas voces se usan cuando la IA saluda a tus llamantes en el modo Asistente Basico.
         </Text>
         <View style={styles.voicesGrid}>
-          {vocesPremium.map((v) => <VoiceCard key={v.id} voz={v} />)}
+          {vocesDisponibles.map((v) => <VoiceCard key={v.id} voz={v} />)}
         </View>
       </View>
 
@@ -136,12 +118,12 @@ export default function VocesScreen() {
               <Ionicons name="mic" size={20} color={colors.accentYellow} />
             </View>
             <View>
-              <Text style={styles.customTitle}>Clona tu voz</Text>
-              <Text style={styles.customDesc}>Graba 30 segundos y crea una voz idéntica a la tuya</Text>
+              <Text style={styles.customTitle}>Tu propia voz</Text>
+              <Text style={styles.customDesc}>Graba tu saludo personalizado en la seccion "Mi IA"</Text>
             </View>
           </View>
-          <View style={[styles.freeBadge, { backgroundColor: colors.accentYellow + "20" }]}>
-            <Text style={[styles.freeText, { color: colors.accentYellow }]}>Premium</Text>
+          <View style={[styles.freeBadge, { backgroundColor: colors.primary + "20" }]}>
+            <Text style={[styles.freeText, { color: colors.primary }]}>Pro / Premium</Text>
           </View>
         </TouchableOpacity>
       </View>
