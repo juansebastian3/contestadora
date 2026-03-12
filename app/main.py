@@ -11,6 +11,7 @@ Aplicación principal FastAPI que integra:
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
@@ -126,23 +127,19 @@ def _aplicar_migraciones(db):
         db.rollback()
 
 
-@app.get("/")
-async def root():
+@app.get("/", response_class=HTMLResponse)
+async def landing_page():
+    """Landing page pública de marketing."""
+    from app.landing import render_landing_html
+    return HTMLResponse(content=render_landing_html())
+
+
+@app.get("/api/status")
+async def api_status():
     return {
         "app": "FiltroLlamadas",
         "version": "1.0.0",
         "status": "running",
-        "endpoints": {
-            "health": "/api/v1/health",
-            "auth": "/auth/registro | /auth/login | /auth/refresh",
-            "webhooks": "/webhooks/voice/incoming",
-            "websocket": "/ws/media-stream",
-            "api": "/api/v1/dashboard (requiere Bearer token)",
-            "docs": "/docs (Swagger UI con login)",
-            "voces": "/api/v1/voces (público)",
-            "planes": "/api/v1/planes (público)",
-            "suscripcion": "/suscripcion/planes (página web pública)",
-        },
     }
 
 
