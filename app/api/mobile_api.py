@@ -405,31 +405,31 @@ async def cambiar_modo_asistente(
     usuario: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Cambiar el modo del asistente: asistente_basico, contestadora, secretaria_ia.
+    """Cambiar el modo del asistente: asistente_basico, contestadora, agente_ia.
 
     - asistente_basico: Polly saluda, IA solo escucha y transcribe (Free)
     - contestadora: Tu voz grabada como saludo, IA solo escucha (Pro)
-    - secretaria_ia: Tu voz saluda + IA conversa como secretaria (Premium)
+    - agente_ia: Tu voz saluda + IA conversa como agente (Premium)
     """
     modos_validos = [m.value for m in ModoAsistente]
     if data.modo not in modos_validos:
         raise HTTPException(status_code=400, detail=f"Modo inválido. Opciones: {modos_validos}")
 
-    # Contestadora y secretaria_ia requieren audio grabado
-    if data.modo in (ModoAsistente.CONTESTADORA.value, ModoAsistente.SECRETARIA_IA.value):
+    # Contestadora y agente_ia requieren audio grabado
+    if data.modo in (ModoAsistente.CONTESTADORA.value, ModoAsistente.AGENTE_IA.value):
         if not usuario.audio_saludo_url:
             raise HTTPException(
                 status_code=400,
-                detail="Para usar modo contestadora o secretaria IA, primero sube tu audio de saludo."
+                detail="Para usar modo contestadora o Agente IA, primero sube tu audio de saludo."
             )
 
     # Verificar plan requerido
     if data.modo == ModoAsistente.CONTESTADORA.value:
         if usuario.plan not in (PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
             raise HTTPException(status_code=403, detail="El modo contestadora requiere plan Pro o Premium.")
-    elif data.modo == ModoAsistente.SECRETARIA_IA.value:
+    elif data.modo == ModoAsistente.AGENTE_IA.value:
         if usuario.plan != PlanTipo.PREMIUM.value:
-            raise HTTPException(status_code=403, detail="El modo secretaria IA requiere plan Premium.")
+            raise HTTPException(status_code=403, detail="El modo Agente IA requiere plan Premium.")
 
     usuario.modo_asistente = data.modo
     db.commit()
@@ -501,7 +501,7 @@ async def borrar_audio_saludo(
     usuario.audio_saludo_duracion = None
 
     # Si estaba en modo que requiere audio, volver a IA conversacional
-    if usuario.modo_asistente in (ModoAsistente.CONTESTADORA.value, ModoAsistente.SECRETARIA_IA.value):
+    if usuario.modo_asistente in (ModoAsistente.CONTESTADORA.value, ModoAsistente.AGENTE_IA.value):
         usuario.modo_asistente = ModoAsistente.ASISTENTE_BASICO.value
 
     db.commit()

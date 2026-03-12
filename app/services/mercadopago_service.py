@@ -36,7 +36,7 @@ PLANES_CONFIG = {
     },
     "premium": {
         "titulo": "FiltroLlamadas Premium",
-        "descripcion": "Secretaria IA que conversa + calendario + llamadas ilimitadas",
+        "descripcion": "Agente IA que conversa + calendario + llamadas ilimitadas",
         "precio_mensual": 9.99,
         "precio_anual": 99.99,
     },

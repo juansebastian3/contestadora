@@ -58,7 +58,7 @@ class ModoFiltrado(str, enum.Enum):
 class ModoAsistente(str, enum.Enum):
     ASISTENTE_BASICO = "asistente_basico"    # Free: Polly saluda, IA solo escucha y transcribe
     CONTESTADORA = "contestadora"            # Pro: Tu voz grabada como saludo, IA solo escucha
-    SECRETARIA_IA = "secretaria_ia"          # Premium: Tu voz saluda + IA conversa como secretaria
+    AGENTE_IA = "agente_ia"          # Premium: Tu voz saluda + IA conversa como agente IA
 
 
 class CalendarioModo(str, enum.Enum):
@@ -365,10 +365,10 @@ def seed_voces_y_planes(db):
             "llamadas_mes": 9999, "minutos_mes": 9999,
             "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
             "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": True,
-            "descripcion": "Secretaria IA que conversa, agenda y gestiona",
+            "descripcion": "Agente IA que conversa, agenda y gestiona",
             "features_json": [
                 "Llamadas ilimitadas",
-                "Secretaria IA conversa con llamantes",
+                "Agente IA conversa con llamantes",
                 "Consulta tu calendario en tiempo real",
                 "Agenda reuniones automáticamente",
                 "Horarios personalizados",

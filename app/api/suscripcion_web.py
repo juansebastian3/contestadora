@@ -350,7 +350,7 @@ def _render_planes_html() -> str:
             <div class="plan-nombre">Premium</div>
             <div class="plan-precio" id="precio-premium">$9.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-premium" style="display:none;"></div>
-            <div class="plan-desc">Secretaria IA que conversa, agenda y gestiona tus llamadas</div>
+            <div class="plan-desc">Agente IA que conversa, agenda y gestiona tus llamadas</div>
             <div class="periodo-toggle">
                 <button class="periodo-btn active" onclick="setPeriodo('premium','mensual',this)">Mensual</button>
                 <button class="periodo-btn" onclick="setPeriodo('premium','anual',this)">Anual</button>
@@ -359,7 +359,7 @@ def _render_planes_html() -> str:
                 <li>Llamadas ilimitadas</li>
                 <li>Minutos ilimitados</li>
                 <li>Tu voz grabada + IA conversa</li>
-                <li>Secretaria IA inteligente</li>
+                <li>Agente IA inteligente</li>
                 <li>Google Calendar + Outlook</li>
                 <li>Modo Luna con horario</li>
                 <li>Soporte prioritario</li>

@@ -13,8 +13,8 @@
     Para conocidos en modo Luna: tu voz saluda.
     IA solo ESCUCHA. No conversa.
 
-  SECRETARIA_IA (Premium):
-    Tu voz grabada como saludo + IA conversa como secretaria.
+  AGENTE_IA (Premium):
+    Tu voz grabada como saludo + IA conversa como agente.
     Consulta calendario, agenda reuniones, gestiona horarios.
     Conversación completa con GPT-4o-mini.
 ─────────────────────────────────────────────────────────────────
@@ -69,14 +69,14 @@ def _construir_saludo_basico(usuario: Usuario | None) -> str:
     )
 
 
-def _construir_system_prompt_secretaria(usuario: Usuario | None, evento_calendario: dict = None) -> str:
-    """System prompt para modo Premium (secretaria IA que conversa)."""
+def _construir_system_prompt_agente(usuario: Usuario | None, evento_calendario: dict = None) -> str:
+    """System prompt para modo Premium (Agente IA que conversa)."""
     nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
 
     base = (
-        f"Eres {nombre_asistente}, la secretaria personal de {nombre_owner}.\n\n"
-        "TU ROL: Secretaria telefónica profesional que CONVERSA con el llamante.\n\n"
+        f"Eres {nombre_asistente}, la agente personal de {nombre_owner}.\n\n"
+        "TU ROL: Agente telefónico profesional que CONVERSA con el llamante.\n\n"
         "CAPACIDADES:\n"
         "- Tomar recados completos (nombre, motivo, urgencia)\n"
         "- Informar disponibilidad basada en el calendario\n"
@@ -107,7 +107,7 @@ def _determinar_modo_asistente(usuario: Usuario | None, numero_conocido: bool) -
 
     Free → siempre ASISTENTE_BASICO (Polly saluda, IA escucha)
     Pro  → desconocidos: ASISTENTE_BASICO | conocidos/luna: CONTESTADORA (tu voz)
-    Premium → siempre SECRETARIA_IA (tu voz + IA conversa)
+    Premium → siempre AGENTE_IA (tu voz + IA conversa)
     """
     if not usuario:
         return ModoAsistente.ASISTENTE_BASICO.value
@@ -115,7 +115,7 @@ def _determinar_modo_asistente(usuario: Usuario | None, numero_conocido: bool) -
     plan = usuario.plan or PlanTipo.FREE.value
 
     if plan == PlanTipo.PREMIUM.value:
-        return ModoAsistente.SECRETARIA_IA.value
+        return ModoAsistente.AGENTE_IA.value
     elif plan == PlanTipo.PRO.value:
         # Pro: si tiene audio grabado y es conocido o modo luna → su voz
         if usuario.audio_saludo_url and numero_conocido:
@@ -192,8 +192,8 @@ async def contestar_llamada(request: Request):
     modo = _determinar_modo_asistente(usuario, numero_conocido)
     logger.info(f"Modo: {modo} | Plan: {usuario.plan if usuario else 'ninguno'}")
 
-    if modo == ModoAsistente.SECRETARIA_IA.value:
-        return _responder_secretaria_ia(usuario, base_url, evento_calendario)
+    if modo == ModoAsistente.AGENTE_IA.value:
+        return _responder_agente_ia(usuario, base_url, evento_calendario)
     elif modo == ModoAsistente.CONTESTADORA.value:
         return _responder_contestadora(usuario, base_url, evento_calendario)
     else:
@@ -272,12 +272,12 @@ def _responder_contestadora(usuario: Usuario | None, base_url: str, evento_calen
 
 
 # ═══════════════════════════════════════════════════════════
-# MODO 3: SECRETARIA IA (Premium)
-# Tu voz saluda + IA conversa como secretaria
+# MODO 3: AGENTE IA (Premium)
+# Tu voz saluda + IA conversa como agente
 # ═══════════════════════════════════════════════════════════
 
-def _responder_secretaria_ia(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
-    """Tu voz saluda, luego la IA conversa como secretaria."""
+def _responder_agente_ia(usuario: Usuario | None, base_url: str, evento_calendario: dict = None) -> Response:
+    """Tu voz saluda, luego la IA conversa como agente."""
     respuesta = VoiceResponse()
     respuesta.pause(length=1)
 
@@ -294,13 +294,13 @@ def _responder_secretaria_ia(usuario: Usuario | None, base_url: str, evento_cale
 
         if evento_calendario:
             saludo = (
-                f"Hola, soy {nombre_asistente}, secretaria de {nombre_owner}. "
+                f"Hola, soy {nombre_asistente}, agente de {nombre_owner}. "
                 f"En este momento esta en una reunion. "
                 "¿Con quien hablo y en que puedo ayudarte?"
             )
         else:
             saludo = (
-                f"Hola, soy {nombre_asistente}, secretaria de {nombre_owner}. "
+                f"Hola, soy {nombre_asistente}, agente de {nombre_owner}. "
                 f"En este momento no puede atender. "
                 "¿Con quien hablo y en que puedo ayudarte?"
             )
@@ -309,7 +309,7 @@ def _responder_secretaria_ia(usuario: Usuario | None, base_url: str, evento_cale
     # La IA conversa
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/secretaria-procesar",
+        action="/webhooks/voice/agente-procesar",
         language="es-CL",
         speech_timeout="auto",
         timeout=5,
@@ -370,12 +370,12 @@ async def escuchar_recado(request: Request, SpeechResult: str = Form("")):
 
 
 # ═══════════════════════════════════════════════════════════
-# SECRETARIA PROCESAR (Premium: IA conversa)
+# AGENTE PROCESAR (Premium: IA conversa)
 # ═══════════════════════════════════════════════════════════
 
-@router.api_route("/secretaria-procesar", methods=["GET", "POST"])
-async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
-    """Procesa turnos de conversación de la secretaria IA (Premium).
+@router.api_route("/agente-procesar", methods=["GET", "POST"])
+async def agente_procesar(request: Request, SpeechResult: str = Form("")):
+    """Procesa turnos de conversación de la Agente IA (Premium).
 
     La IA escucha, responde, y sigue conversando hasta que cuelguen.
     """
@@ -383,7 +383,7 @@ async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
     call_sid = form_data.get("CallSid", "unknown")
     numero_destino = form_data.get("To", "")
 
-    logger.info(f"[{call_sid}] Secretaria recibe: {SpeechResult}")
+    logger.info(f"[{call_sid}] Agente recibe: {SpeechResult}")
 
     usuario = _obtener_usuario_por_numero_twilio(numero_destino)
 
@@ -394,7 +394,7 @@ async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
     conv.agregar_mensaje_usuario(SpeechResult)
 
     # Generar respuesta IA
-    system_prompt = _construir_system_prompt_secretaria(usuario)
+    system_prompt = _construir_system_prompt_agente(usuario)
     from app.services.llm_service import openai_client
     from app.core.config import settings as app_settings
 
@@ -414,7 +414,7 @@ async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
         texto_ia = "Disculpa, tuve un problema tecnico. ¿Podrias repetir?"
 
     conv.agregar_mensaje_asistente(texto_ia)
-    logger.info(f"[{call_sid}] Secretaria: {texto_ia}")
+    logger.info(f"[{call_sid}] Agente: {texto_ia}")
 
     # Responder con Polly
     respuesta = VoiceResponse()
@@ -423,7 +423,7 @@ async def secretaria_procesar(request: Request, SpeechResult: str = Form("")):
     # Seguir escuchando
     gather = Gather(
         input="speech",
-        action="/webhooks/voice/secretaria-procesar",
+        action="/webhooks/voice/agente-procesar",
         language="es-CL",
         speech_timeout="auto",
         timeout=5,

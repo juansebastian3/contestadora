@@ -2,9 +2,9 @@
  * PersonalizacionScreen - Pantalla de personalización del asistente
  *
  * Permite al usuario:
- * 1. Elegir modo de asistente (Asistente Básico / Contestadora / Secretaria IA)
+ * 1. Elegir modo de asistente (Asistente Básico / Contestadora / Agente IA)
  * 2. Escribir un prompt personalizado para la IA
- * 3. Grabar audio de saludo con expo-av para modo contestadora/secretaria
+ * 3. Grabar audio de saludo con expo-av para modo contestadora/agente IA
  */
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -40,10 +40,10 @@ const MODOS = [
     planMinimo: "pro",
   },
   {
-    key: "secretaria_ia",
-    titulo: "Secretaria IA",
+    key: "agente_ia",
+    titulo: "Agente IA",
     icono: "🤖",
-    descripcion: "Tu voz grabada como saludo + la IA conversa como tu secretaria personal. Agenda, calendario y mas.",
+    descripcion: "Tu voz grabada como saludo + la IA conversa como tu agente personal. Agenda, calendario y mas.",
     requiereAudio: true,
     planMinimo: "premium",
   },
@@ -251,7 +251,7 @@ export default function PersonalizacionScreen() {
   async function eliminarAudio() {
     Alert.alert(
       "Eliminar audio",
-      "Si estas en modo contestadora o secretaria IA, volveras a asistente basico.",
+      "Si estas en modo contestadora o Agente IA, volveras a asistente basico.",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -365,7 +365,7 @@ export default function PersonalizacionScreen() {
       <View style={styles.seccion}>
         <Text style={styles.seccionTitulo}>Audio de saludo</Text>
         <Text style={styles.seccionDesc}>
-          Graba tu propio saludo. Se usa en los modos Contestadora y Secretaria IA.
+          Graba tu propio saludo. Se usa en los modos Contestadora y Agente IA.
         </Text>
 
         {subiendoAudio ? (
