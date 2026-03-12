@@ -155,6 +155,7 @@ def render_landing_html() -> str:
             <a href="{planes_url}" class="btn btn-primary">Empezar gratis</a>
             <a href="#como-funciona" class="btn btn-secondary">Ver como funciona</a>
         </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 20px; opacity: 0.7;">Activar y desactivar es igual de facil. Un codigo lo activa, otro lo quita. Sin contratos.</p>
     </section>
 
     <!-- SOCIAL PROOF -->
@@ -299,8 +300,13 @@ def render_landing_html() -> str:
         <h2 class="section-title">FAQ</h2>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Y si quiero desactivarlo? Es dificil?</div>
+            <div class="faq-a">Para nada. Si quieres dejar de usar FiltroLlamadas, solo marcas ##002# en el teclado de tu telefono y listo, tus llamadas vuelven a la normalidad al instante. La app te guia paso a paso tanto para activar como para desactivar. Sin contratos, sin letra chica.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Como funciona el desvio de llamadas?</div>
-            <div class="faq-a">Cuando recibes una llamada que no contestas (o que desvias manualmente), tu operador la redirige al numero FiltroLlamadas. La IA contesta en tu nombre, escucha al llamante y te envia un resumen.</div>
+            <div class="faq-a">Marcas un codigo simple en el teclado de tu telefono (la app te lo da listo) y tu operador desvia las llamadas que no contestas a tu asistente IA. Solo se desvian las que no contestas, las demas las sigues recibiendo normal.</div>
         </div>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
@@ -329,6 +335,7 @@ def render_landing_html() -> str:
         <h2>Deja de perder llamadas importantes</h2>
         <p>Empieza gratis hoy. Sin tarjeta de credito, sin compromisos. Configura en 30 segundos.</p>
         <a href="{planes_url}" class="btn btn-primary" style="font-size:1.1rem; padding:16px 40px;">Empezar gratis ahora</a>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 16px;">Activarlo toma 30 segundos. Desactivarlo tambien. Sin letra chica.</p>
     </section>
 
     <footer>

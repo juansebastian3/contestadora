@@ -240,6 +240,13 @@ export default function ConfigScreen() {
               {/* GUIA EXPANDIBLE */}
               {guiaAbierta && (
                 <View style={styles.guiaContainer}>
+                  {/* Mensaje de tranquilidad */}
+                  <View style={styles.tranquiloCard}>
+                    <Text style={styles.tranquiloText}>
+                      Tranquilo, activar y desactivar el desvio es igual de facil. Si en algun momento quieres dejar de usarlo, un solo codigo lo quita al instante.
+                    </Text>
+                  </View>
+
                   {/* Explicacion */}
                   <View style={styles.guiaIntro}>
                     <Ionicons name="information-circle" size={20} color={colors.primary} />
@@ -319,17 +326,48 @@ export default function ConfigScreen() {
                     </Text>
                   </View>
 
-                  {/* Cancelar todos */}
-                  <TouchableOpacity style={styles.cancelarTodosBtn} onPress={cancelarTodosDesvios}>
-                    <Ionicons name="close-circle-outline" size={18} color={colors.accentRed} />
-                    <Text style={styles.cancelarTodosText}>Cancelar todos los desvios (##002#)</Text>
-                  </TouchableOpacity>
-
                   {/* Nota sobre calendario */}
                   <View style={styles.calendarNote}>
                     <Ionicons name="calendar-outline" size={16} color={colors.primary} />
                     <Text style={styles.calendarNoteText}>
                       Con el plan Premium, el Agente IA consulta tu calendario automaticamente. Si estas en reunion, le avisa al llamante y ofrece agendar una devolucion.
+                    </Text>
+                  </View>
+
+                  {/* ═══ OFFBOARDING: como quitar el desvio ═══ */}
+                  <View style={styles.offboardingCard}>
+                    <View style={styles.offboardingHeader}>
+                      <Ionicons name="shield-checkmark" size={20} color={colors.accentGreen} />
+                      <Text style={styles.offboardingTitle}>Quieres desactivarlo? Es igual de facil</Text>
+                    </View>
+                    <Text style={styles.offboardingDesc}>
+                      Si en algun momento quieres dejar de usar FiltroLlamadas, simplemente marca este codigo en tu teclado y listo. Tus llamadas volveran a la normalidad al instante.
+                    </Text>
+
+                    <View style={styles.offboardingCodeContainer}>
+                      <View style={styles.offboardingCodeBox}>
+                        <Text style={styles.offboardingCodeLabel}>Cancelar todos los desvios</Text>
+                        <Text style={styles.offboardingCode}>##002#</Text>
+                      </View>
+                      <View style={styles.offboardingActions}>
+                        <TouchableOpacity
+                          style={styles.offboardingCallBtn}
+                          onPress={() => abrirMarcador("##002#")}
+                        >
+                          <Ionicons name="call-outline" size={16} color={colors.accentRed} />
+                          <Text style={styles.offboardingCallText}>Marcar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.offboardingCopyBtn}
+                          onPress={() => copiarCodigo("##002#")}
+                        >
+                          <Ionicons name="copy-outline" size={14} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <Text style={styles.offboardingNote}>
+                      Tambien puedes desactivar cada tipo por separado usando el boton "Desactivar" de arriba. No se borra tu cuenta ni tus datos.
                     </Text>
                   </View>
                 </View>
@@ -523,18 +561,43 @@ const styles = StyleSheet.create({
   },
   tipText: { color: colors.textSecondary, fontSize: fontSize.xs, lineHeight: 18, flex: 1 },
 
-  cancelarTodosBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-    paddingVertical: 12, marginTop: 4, marginBottom: 8,
-  },
-  cancelarTodosText: { color: colors.accentRed, fontSize: fontSize.sm, fontWeight: "500" },
-
   calendarNote: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,
     backgroundColor: colors.primary + "08", borderRadius: borderRadius.md,
     padding: 12, borderWidth: 1, borderColor: colors.primary + "15",
+    marginTop: 6,
   },
   calendarNoteText: { color: colors.textSecondary, fontSize: fontSize.xs, lineHeight: 18, flex: 1 },
+
+  tranquiloCard: {
+    backgroundColor: colors.accentGreen + "10", borderRadius: borderRadius.md,
+    padding: 12, marginBottom: 16, borderWidth: 1, borderColor: colors.accentGreen + "20",
+  },
+  tranquiloText: { color: colors.accentGreen, fontSize: fontSize.sm, lineHeight: 20, textAlign: "center", fontWeight: "500" },
+
+  offboardingCard: {
+    backgroundColor: colors.bg, borderRadius: borderRadius.md,
+    padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.accentGreen + "25",
+  },
+  offboardingHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  offboardingTitle: { color: colors.textPrimary, fontSize: fontSize.md, fontWeight: "700", flex: 1 },
+  offboardingDesc: { color: colors.textSecondary, fontSize: fontSize.sm, lineHeight: 20, marginBottom: 14 },
+  offboardingCodeContainer: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: "#0f172a", borderRadius: borderRadius.sm, padding: 12, marginBottom: 12,
+  },
+  offboardingCodeBox: { flex: 1 },
+  offboardingCodeLabel: { color: colors.textMuted, fontSize: fontSize.xs, marginBottom: 2 },
+  offboardingCode: { color: colors.accentRed, fontSize: fontSize.lg, fontWeight: "800", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
+  offboardingActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  offboardingCallBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: colors.accentRed + "15", borderRadius: borderRadius.sm,
+    paddingVertical: 8, paddingHorizontal: 14,
+  },
+  offboardingCallText: { color: colors.accentRed, fontSize: fontSize.sm, fontWeight: "600" },
+  offboardingCopyBtn: { padding: 8 },
+  offboardingNote: { color: colors.textMuted, fontSize: fontSize.xs, lineHeight: 16 },
 
   // ─── Otros ─────────────────────────────────────────
   logoutButton: {
