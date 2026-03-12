@@ -29,3 +29,5 @@ Thumbs.db
 # Mobile (se maneja por separado)
 mobile/node_modules/
 mobile/.expo/
+.~lock.*
+~$*
