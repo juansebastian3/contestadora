@@ -357,6 +357,10 @@ const api = {
   // Tips para grabar saludo
   getTipsSaludo: () => api.get("/api/v1/tips/saludo"),
 
+  // Suscripción
+  getSuscripcionUrl: () => api.get("/api/v1/suscripcion/url"),
+  getSuscripcionEstado: () => api.get("/api/v1/suscripcion/estado"),
+
   // Health (público)
   health: () => api.get("/api/v1/health"),
 };

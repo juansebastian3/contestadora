@@ -19,6 +19,7 @@ from app.core.auth import router as auth_router
 from app.api.webhooks import router as webhooks_router
 from app.api.mobile_api import router as mobile_router
 from app.api.websocket_stream import router as ws_router
+from app.api.suscripcion_web import router as suscripcion_router
 from app.models.database import SessionLocal, seed_voces_y_planes
 
 # Configurar logging
@@ -60,6 +61,7 @@ app.include_router(auth_router)        # /auth/registro, /auth/login, /auth/refr
 app.include_router(webhooks_router)    # /webhooks/voice/* (sin auth - Twilio)
 app.include_router(mobile_router)      # /api/v1/* (con auth JWT)
 app.include_router(ws_router)          # /ws/* (WebSocket)
+app.include_router(suscripcion_router) # /suscripcion/* + /webhooks/mercadopago
 
 # --- NUEVA RUTA DE HEALTHCHECK PARA RAILWAY ---
 @app.get("/api/v1/health")
@@ -72,14 +74,54 @@ async def health_check():
 async def startup_event():
     """Inicializar datos al arrancar el servidor."""
     logger.info("🚀 Iniciando FiltroLlamadas...")
+
+    # Asegurar que todas las tablas/columnas existan (crea las que falten)
+    from app.models.database import Base, engine
+    Base.metadata.create_all(bind=engine)
+    logger.info("✅ Tablas de base de datos verificadas")
+
     db = SessionLocal()
     try:
+        # Migración manual: agregar columnas nuevas si no existen (PostgreSQL)
+        _aplicar_migraciones(db)
+
         seed_voces_y_planes(db)
         logger.info("✅ Voces y planes inicializados")
     except Exception as e:
         logger.error(f"Error en seed: {e}")
     finally:
         db.close()
+
+
+def _aplicar_migraciones(db):
+    """Agrega columnas nuevas a tablas existentes si no existen.
+
+    SQLAlchemy create_all() solo crea tablas nuevas, no agrega columnas
+    a tablas existentes. Esta función lo hace manualmente.
+    """
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(db.bind)
+        columnas_usuario = [col["name"] for col in inspector.get_columns("usuarios")]
+
+        nuevas_columnas = {
+            "google_calendar_token": "TEXT",
+            "outlook_calendar_token": "TEXT",
+            "calendario_auto_activar": "BOOLEAN DEFAULT FALSE",
+            "calendario_modo": "VARCHAR(30) DEFAULT 'solo_reuniones'",
+            "mercadopago_customer_id": "VARCHAR(100)",
+        }
+
+        for col_name, col_type in nuevas_columnas.items():
+            if col_name not in columnas_usuario:
+                db.execute(text(f"ALTER TABLE usuarios ADD COLUMN {col_name} {col_type}"))
+                logger.info(f"  + Columna '{col_name}' agregada a usuarios")
+
+        db.commit()
+        logger.info("✅ Migraciones aplicadas")
+    except Exception as e:
+        logger.warning(f"Migraciones: {e} (puede ser normal en primera ejecución)")
+        db.rollback()
 
 
 @app.get("/")
@@ -97,6 +139,7 @@ async def root():
             "docs": "/docs (Swagger UI con login)",
             "voces": "/api/v1/voces (público)",
             "planes": "/api/v1/planes (público)",
+            "suscripcion": "/suscripcion/planes (página web pública)",
         },
     }
 

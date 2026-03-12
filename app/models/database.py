@@ -67,6 +67,14 @@ class CalendarioModo(str, enum.Enum):
     MANUAL = "manual"                    # No auto-activar, el usuario decide
 
 
+class EstadoSuscripcion(str, enum.Enum):
+    PENDIENTE = "pendiente"        # Pago iniciado pero no completado
+    ACTIVA = "activa"              # Pago aprobado, suscripción vigente
+    CANCELADA = "cancelada"        # Usuario canceló
+    EXPIRADA = "expirada"          # No se renovó
+    RECHAZADA = "rechazada"        # Pago rechazado
+
+
 class TipoVoz(str, enum.Enum):
     POLLY = "polly"            # Gratuita - Amazon Polly vía Twilio
     ELEVENLABS = "elevenlabs"  # Premium - ElevenLabs
@@ -93,6 +101,7 @@ class Usuario(Base):
     plan = Column(String(20), default=PlanTipo.FREE.value)
     plan_expira = Column(DateTime, nullable=True)
     stripe_customer_id = Column(String(100), nullable=True)
+    mercadopago_customer_id = Column(String(100), nullable=True)
 
     # Configuración del asistente
     nombre_asistente = Column(String(50), default="Sofía")
@@ -239,6 +248,44 @@ class NumeroBloqueado(Base):
     numero = Column(String(20), nullable=False)
     razon = Column(String(100), nullable=True)
     creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: SUSCRIPCIONES (MercadoPago / Apple IAP / Google Play)
+# ═══════════════════════════════════════════════════════════
+
+class Suscripcion(Base):
+    __tablename__ = "suscripciones"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    plan_codigo = Column(String(20), nullable=False)  # pro, premium
+
+    # Origen del pago
+    origen = Column(String(20), nullable=False)  # mercadopago, apple_iap, google_play
+    estado = Column(String(20), default=EstadoSuscripcion.PENDIENTE.value)
+
+    # MercadoPago
+    mp_preference_id = Column(String(100), nullable=True)
+    mp_payment_id = Column(String(100), nullable=True)
+    mp_subscription_id = Column(String(100), nullable=True)
+    mp_external_reference = Column(String(100), nullable=True, index=True)
+
+    # Periodo
+    fecha_inicio = Column(DateTime, nullable=True)
+    fecha_fin = Column(DateTime, nullable=True)
+    periodo = Column(String(10), default="mensual")  # mensual, anual
+
+    # Montos
+    monto = Column(Float, nullable=True)
+    moneda = Column(String(5), default="USD")
+
+    # Metadata
+    creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    actualizado = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+                         onupdate=lambda: datetime.now(timezone.utc))
+
+    usuario = relationship("Usuario")
 
 
 # ═══════════════════════════════════════════════════════════

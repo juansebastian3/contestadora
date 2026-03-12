@@ -101,6 +101,20 @@ def _decode_token(token: str) -> dict:
         )
 
 
+def verificar_token(token: str) -> Optional[dict]:
+    """Verifica un JWT y retorna el payload, o None si es inválido.
+
+    Versión que no lanza excepciones (útil para verificación en páginas web).
+    """
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("type") == "access":
+            return {"uid": payload.get("sub")}
+        return None
+    except JWTError:
+        return None
+
+
 # ═══════════════════════════════════════════════════════════
 # DEPENDENCIA: OBTENER USUARIO ACTUAL
 # ═══════════════════════════════════════════════════════════

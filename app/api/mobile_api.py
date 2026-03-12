@@ -866,6 +866,24 @@ async def obtener_config(
     return {c.clave: c.valor for c in configs}
 
 
+@router.get("/suscripcion/url")
+async def obtener_url_suscripcion(
+    usuario: Usuario = Depends(get_current_user),
+):
+    """Genera la URL de la página de suscripción con el token del usuario.
+
+    La app abre esta URL en el navegador para que el usuario se suscriba
+    sin necesidad de volver a iniciar sesión en la web.
+    """
+    from app.core.auth import create_access_token
+    from app.core.config import settings
+
+    # Crear un token de corta duración para la web (15 min)
+    token = create_access_token(usuario.uid)
+    url = f"{settings.BASE_URL}/suscripcion/planes?token={token}"
+    return {"url": url, "plan_actual": usuario.plan}
+
+
 @router.get("/health")
 async def health_check():
     """Health check. Público."""

@@ -55,6 +55,11 @@ class Settings:
     OUTLOOK_CLIENT_ID: str = os.getenv("OUTLOOK_CLIENT_ID", "")
     OUTLOOK_CLIENT_SECRET: str = os.getenv("OUTLOOK_CLIENT_SECRET", "")
 
+    # MercadoPago (suscripciones web)
+    MERCADOPAGO_ACCESS_TOKEN: str = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
+    MERCADOPAGO_PUBLIC_KEY: str = os.getenv("MERCADOPAGO_PUBLIC_KEY", "")
+    MERCADOPAGO_SANDBOX: bool = os.getenv("MERCADOPAGO_SANDBOX", "true").lower() == "true"
+
     # Nombre del asistente (legacy, ahora es por usuario)
     ASSISTANT_NAME: str = "Sofía"
     OWNER_NAME: str = "Juan Sebastián"
