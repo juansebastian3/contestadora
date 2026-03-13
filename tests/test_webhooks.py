@@ -104,7 +104,7 @@ class TestLandingYLegal:
     def test_landing_page(self, client):
         response = client.get("/")
         assert response.status_code == 200
-        assert "FiltroLlamadas" in response.text
+        assert "ContestaDora" in response.text
 
     def test_terminos_page(self, client):
         response = client.get("/terminos")
