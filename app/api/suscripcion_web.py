@@ -56,7 +56,7 @@ async def crear_pago(
     periodo = body.get("periodo", "mensual")
     token = body.get("token", "")
 
-    if plan not in ("pro", "premium"):
+    if plan not in ("basico", "pro", "premium"):
         raise HTTPException(status_code=400, detail="Plan inválido")
     if periodo not in ("mensual", "anual"):
         raise HTTPException(status_code=400, detail="Periodo inválido")
@@ -246,7 +246,7 @@ def _render_planes_html() -> str:
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FiltroLlamadas - Planes y Precios</title>
+    <title>ContestaDora - Planes y Precios</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }}
@@ -255,9 +255,10 @@ def _render_planes_html() -> str:
         .hero h1 {{ font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }}
         .hero p {{ color: #94a3b8; font-size: 1.1rem; max-width: 500px; margin: 0 auto; }}
 
-        .planes {{ display: flex; justify-content: center; gap: 24px; padding: 20px; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }}
+        .planes {{ display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }}
 
-        .plan-card {{ background: #1e293b; border-radius: 20px; padding: 32px 28px; width: 300px; position: relative; border: 1px solid #334155; transition: transform 0.2s, border-color 0.2s; }}
+        .plan-card {{ background: #1e293b; border-radius: 20px; padding: 32px 24px; width: 320px; position: relative; border: 1px solid #334155; transition: transform 0.2s, border-color 0.2s; }}
+        .plan-subtitle {{ color: #f59e0b; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }}
         .plan-card:hover {{ transform: translateY(-4px); border-color: #6366f1; }}
         .plan-card.destacado {{ border: 2px solid #6366f1; }}
         .plan-card.destacado::before {{ content: "MAS POPULAR"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 0.7rem; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; }}
@@ -304,14 +305,14 @@ def _render_planes_html() -> str:
 </head>
 <body>
     <div class="hero">
-        <h1>FiltroLlamadas</h1>
-        <p>Tu asistente IA que contesta y filtra llamadas. Elige el plan que se adapte a ti.</p>
+        <h1><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></h1>
+        <p>Dora contesta, tu decides. Elige el plan que se adapte a tu vida.</p>
     </div>
 
     <!-- Login previo -->
     <div id="auth-section" style="max-width: 400px; margin: 0 auto 24px; padding: 0 20px;">
         <div class="login-section" id="login-form">
-            <p style="color: #94a3b8; margin-bottom: 12px; font-size: 0.9rem;">Inicia sesion con tu cuenta de FiltroLlamadas</p>
+            <p style="color: #94a3b8; margin-bottom: 12px; font-size: 0.9rem;">Inicia sesion con tu cuenta de ContestaDora</p>
             <input type="email" id="login-email" placeholder="Email" autocomplete="email">
             <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password">
             <button class="btn-login" onclick="iniciarSesion()">Iniciar Sesion</button>
@@ -322,49 +323,72 @@ def _render_planes_html() -> str:
         </div>
     </div>
 
+    <p style="color: #94a3b8; text-align: center; max-width: 500px; margin: 0 auto 24px; font-size: 0.9rem;">Tu trial de 7 dias termino. Elige el plan que se adapte a tu vida.</p>
     <div class="planes">
-        <!-- PRO -->
+        <!-- BASICO / ESTUDIANTE -->
+        <div class="plan-card">
+            <div class="plan-subtitle">Estudiante</div>
+            <div class="plan-nombre">Basico</div>
+            <div class="plan-precio" id="precio-basico">$4.99<span>/mes</span></div>
+            <div class="plan-ahorro" id="ahorro-basico" style="display:none;"></div>
+            <div class="plan-desc">Recibes unas 3 llamadas de desconocidos al dia y no quieres distraerte mientras estudias.</div>
+            <div class="periodo-toggle">
+                <button class="periodo-btn active" onclick="setPeriodo('basico','mensual',this)">Mensual</button>
+                <button class="periodo-btn" onclick="setPeriodo('basico','anual',this)">Anual</button>
+            </div>
+            <ul class="features">
+                <li>100 llamadas/mes (~3 al dia)</li>
+                <li>Numero propio dedicado</li>
+                <li>IA contesta, escucha y transcribe</li>
+                <li>Analisis: quien, por que, urgencia</li>
+                <li>Resumen WhatsApp + push</li>
+                <li>Categoriza: Personal, Trabajo, Spam</li>
+            </ul>
+            <button class="btn-suscribir pro" onclick="suscribir('basico')" id="btn-basico" disabled>Elegir Estudiante</button>
+        </div>
+
+        <!-- PRO / ADULTO -->
         <div class="plan-card destacado">
+            <div class="plan-subtitle">Adulto</div>
             <div class="plan-nombre">Pro</div>
-            <div class="plan-precio" id="precio-pro">$4.99<span>/mes</span></div>
+            <div class="plan-precio" id="precio-pro">$5.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-pro" style="display:none;"></div>
-            <div class="plan-desc">Tu voz grabada como contestadora personal + modo luna</div>
+            <div class="plan-desc">Te llaman bastante para ofrecerte cosas, pero tienes miedo de perderte una llamada importante.</div>
             <div class="periodo-toggle">
                 <button class="periodo-btn active" onclick="setPeriodo('pro','mensual',this)">Mensual</button>
                 <button class="periodo-btn" onclick="setPeriodo('pro','anual',this)">Anual</button>
             </div>
             <ul class="features">
-                <li>200 llamadas / mes</li>
-                <li>500 minutos de filtrado</li>
-                <li>Tu voz grabada para conocidos</li>
-                <li>Voz Polly para desconocidos</li>
-                <li>Prompt personalizado</li>
-                <li>Modo Luna</li>
-                <li>Transcripcion y resumen IA</li>
+                <li>300 llamadas/mes (~10 al dia)</li>
+                <li>Todo lo del Estudiante +</li>
+                <li>Graba tu voz como saludo</li>
+                <li>Modo Luna: silencia TODO</li>
+                <li>Prompt personalizado para la IA</li>
+                <li>Google Calendar + Outlook</li>
             </ul>
-            <button class="btn-suscribir pro" onclick="suscribir('pro')" id="btn-pro" disabled>Suscribirme a Pro</button>
+            <button class="btn-suscribir pro" onclick="suscribir('pro')" id="btn-pro" disabled>Elegir Adulto</button>
         </div>
 
-        <!-- PREMIUM -->
+        <!-- PREMIUM / EJECUTIVO -->
         <div class="plan-card">
+            <div class="plan-subtitle">Ejecutivo</div>
             <div class="plan-nombre">Premium</div>
             <div class="plan-precio" id="precio-premium">$9.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-premium" style="display:none;"></div>
-            <div class="plan-desc">Agente IA que conversa, agenda y gestiona tus llamadas</div>
+            <div class="plan-desc">Tu secretario digital que filtra, envia recados y agenda reuniones por ti, 24/7.</div>
             <div class="periodo-toggle">
                 <button class="periodo-btn active" onclick="setPeriodo('premium','mensual',this)">Mensual</button>
                 <button class="periodo-btn" onclick="setPeriodo('premium','anual',this)">Anual</button>
             </div>
             <ul class="features">
                 <li>Llamadas ilimitadas</li>
-                <li>Minutos ilimitados</li>
-                <li>Tu voz grabada + IA conversa</li>
-                <li>Agente IA inteligente</li>
-                <li>Google Calendar + Outlook</li>
-                <li>Modo Luna con horario</li>
-                <li>Soporte prioritario</li>
+                <li>Todo lo del Adulto +</li>
+                <li>La IA CONVERSA, no solo escucha</li>
+                <li>Toma recados y agenda reuniones</li>
+                <li>Consulta tu calendario en vivo</li>
+                <li>Voces premium + soporte prioritario</li>
             </ul>
-            <button class="btn-suscribir premium" onclick="suscribir('premium')" id="btn-premium" disabled>Suscribirme a Premium</button>
+            <button class="btn-suscribir premium" onclick="suscribir('premium')" id="btn-premium" disabled>Elegir Ejecutivo</button>
         </div>
     </div>
 
@@ -383,9 +407,10 @@ def _render_planes_html() -> str:
     <script>
         const BASE = "{base_url}";
         let token = null;
-        let periodos = {{ pro: "mensual", premium: "mensual" }};
+        let periodos = {{ basico: "mensual", pro: "mensual", premium: "mensual" }};
         const precios = {{
-            pro: {{ mensual: 4.99, anual: 49.99 }},
+            basico: {{ mensual: 4.99, anual: 49.99 }},
+            pro: {{ mensual: 5.99, anual: 59.99 }},
             premium: {{ mensual: 9.99, anual: 99.99 }}
         }};
 
@@ -396,6 +421,7 @@ def _render_planes_html() -> str:
             document.getElementById("login-form").style.display = "none";
             document.getElementById("logged-info").style.display = "block";
             document.getElementById("user-name").textContent = "Sesion activa desde la app";
+            document.getElementById("btn-basico").disabled = false;
             document.getElementById("btn-pro").disabled = false;
             document.getElementById("btn-premium").disabled = false;
         }}
@@ -422,6 +448,7 @@ def _render_planes_html() -> str:
                 document.getElementById("login-form").style.display = "none";
                 document.getElementById("logged-info").style.display = "block";
                 document.getElementById("user-name").textContent = "Conectado como " + (data.perfil?.nombre || email);
+                document.getElementById("btn-basico").disabled = false;
                 document.getElementById("btn-pro").disabled = false;
                 document.getElementById("btn-premium").disabled = false;
             }} catch (e) {{
@@ -452,7 +479,7 @@ def _render_planes_html() -> str:
 
         async function suscribir(plan) {{
             if (!token) {{
-                alert("Primero inicia sesion con tu cuenta de FiltroLlamadas");
+                alert("Primero inicia sesion con tu cuenta de ContestaDora");
                 return;
             }}
 
@@ -505,7 +532,7 @@ def _render_resultado_html(titulo: str, mensaje: str, color: str, icono: str) ->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FiltroLlamadas - {titulo}</title>
+    <title>ContestaDora - {titulo}</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }}

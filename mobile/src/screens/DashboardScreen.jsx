@@ -45,7 +45,7 @@ const DEMO_DATA = {
       id: 3, call_sid: "demo3", numero_origen: "+56900000000",
       fecha_inicio: new Date(Date.now() - 7200000).toISOString(), estado: "finalizada",
       transcripcion: "", categoria: "Marketing", prioridad: "Baja",
-      resumen: "Llamada de telemarketing ofreciendo plan de internet. Sofía lo despachó.",
+      resumen: "Llamada de telemarketing ofreciendo plan de internet. Dora lo despacho.",
       nombre_contacto: null, whatsapp_enviado: true,
     },
     {
@@ -110,7 +110,7 @@ export default function DashboardScreen({ navigation }) {
         <View>
           <Text style={styles.greeting}>Hola, {userName}</Text>
           <Text style={styles.subtitle}>
-            {isDemo ? "Vista previa" : "Sofía está filtrando tus llamadas"}
+            {isDemo ? "Vista previa" : "Dora esta filtrando tus llamadas"}
           </Text>
         </View>
         <View style={styles.statusDot}>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContestaDora - Brand Guide</title>
+<style>
+  :root {
+    --bg: #0F0F23;
+    --card: #1A1A2E;
+    --card-light: #25254A;
+    --primary: #6C63FF;
+    --primary-light: #8B83FF;
+    --accent: #00D9FF;
+    --green: #00E676;
+    --red: #FF5252;
+    --text: #FFFFFF;
+    --text-sec: #B0B0D0;
+    --text-muted: #6B6B8D;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    padding: 40px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
+  h1 span.light { font-weight: 300; color: var(--text-sec); }
+  h1 span.bold { font-weight: 800; color: var(--primary); }
+  .subtitle { text-align: center; color: var(--text-muted); letter-spacing: 3px; font-size: 0.8rem; margin-bottom: 60px; }
+
+  .section { margin-bottom: 60px; }
+  .section-title {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 20px; padding-bottom: 8px;
+    border-bottom: 1px solid #2A2A4A;
+  }
+
+  .logo-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .logo-card {
+    background: var(--card); border-radius: 16px; padding: 30px;
+    display: flex; flex-direction: column; align-items: center;
+    border: 1px solid #2A2A4A;
+  }
+  .logo-card img, .logo-card svg { max-width: 100%; height: auto; }
+  .logo-card .label {
+    margin-top: 16px; font-size: 0.8rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .dark-bg { background: var(--bg); }
+  .light-bg { background: #f0f0f5; }
+
+  .colors-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .color-swatch {
+    width: 100px; height: 100px; border-radius: 16px;
+    display: flex; align-items: flex-end; padding: 8px;
+    font-size: 0.7rem; font-weight: 600; color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  .personality-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .persona-card {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    border-left: 3px solid var(--primary);
+  }
+  .persona-card h3 { color: var(--primary-light); font-size: 1.1rem; margin-bottom: 4px; }
+  .persona-card .role { color: var(--accent); font-size: 0.8rem; margin-bottom: 12px; }
+  .persona-card p { color: var(--text-sec); font-size: 0.85rem; line-height: 1.6; }
+
+  .messages-list { display: flex; flex-direction: column; gap: 12px; }
+  .msg-bubble {
+    background: var(--card); border-radius: 16px; padding: 16px 20px;
+    max-width: 85%; border: 1px solid #2A2A4A; position: relative;
+  }
+  .msg-bubble::before {
+    content: attr(data-context);
+    display: block; font-size: 0.7rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .msg-bubble .text { color: var(--text-sec); font-size: 0.9rem; line-height: 1.5; }
+  .msg-bubble .text strong { color: var(--primary-light); }
+  .msg-bubble .text em { color: var(--accent); font-style: normal; }
+
+  .wordplay-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .wordplay-card {
+    background: var(--card); border-radius: 12px; padding: 16px;
+    text-align: center;
+  }
+  .wordplay-card .word {
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 4px;
+  }
+  .wordplay-card .word span { color: var(--primary); }
+  .wordplay-card .desc { font-size: 0.75rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<h1><span class="light">Contesta</span><span class="bold">Dora</span></h1>
+<p class="subtitle">BRAND GUIDE &middot; contestadora.io</p>
+
+<!-- ═══ LOGOS ═══ -->
+<div class="section">
+  <div class="section-title">Logos</div>
+  <div class="logo-grid">
+    <div class="logo-card dark-bg">
+      <img src="dora-logo-full.svg" alt="Dora Full" style="max-height: 260px;">
+      <span class="label">Mascota completa</span>
+    </div>
+    <div class="logo-card dark-bg">
+      <img src="dora-icon.svg" alt="Dora Icon" style="max-height: 180px;">
+      <span class="label">Icono App</span>
+    </div>
+    <div class="logo-card dark-bg">
+      <img src="contestadora-wordmark.svg" alt="Wordmark" style="max-height: 80px;">
+      <span class="label">Wordmark</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COLORES ═══ -->
+<div class="section">
+  <div class="section-title">Paleta de colores</div>
+  <div class="colors-row">
+    <div class="color-swatch" style="background:#6C63FF;">#6C63FF<br>Primary</div>
+    <div class="color-swatch" style="background:#8B83FF;">#8B83FF<br>Dora Body</div>
+    <div class="color-swatch" style="background:#4A42CC;">#4A42CC<br>Deep</div>
+    <div class="color-swatch" style="background:#00D9FF;">#00D9FF<br>Headset</div>
+    <div class="color-swatch" style="background:#00E676;">#00E676<br>Active</div>
+    <div class="color-swatch" style="background:#0F0F23;">#0F0F23<br>BG</div>
+    <div class="color-swatch" style="background:#1A1A2E;">#1A1A2E<br>Card</div>
+  </div>
+</div>
+
+<!-- ═══ JUEGOS DE PALABRAS CON DORA ═══ -->
+<div class="section">
+  <div class="section-title">Universo "Dora" &mdash; Juegos de palabras</div>
+  <div class="wordplay-grid">
+    <div class="wordplay-card">
+      <div class="word">Contesta<span>Dora</span></div>
+      <div class="desc">La marca. Contesta tus llamadas.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Opera<span>Dora</span></div>
+      <div class="desc">Modo call center. Filtra y gestiona.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Graba<span>Dora</span></div>
+      <div class="desc">Tu voz personalizada como saludo.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Filtra<span>Dora</span></div>
+      <div class="desc">Separa lo importante del spam.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Agenda<span>Dora</span></div>
+      <div class="desc">Conecta con tu calendario.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Avisa<span>Dora</span></div>
+      <div class="desc">Te manda resumen por WhatsApp.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Vende<span>Dora</span></div>
+      <div class="desc">La que convierte trials en pagos.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Guarda<span>Dora</span></div>
+      <div class="desc">Protege tu tiempo y privacidad.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Recorda<span>Dora</span></div>
+      <div class="desc">Nunca olvida un recado.</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word">Colabora<span>Dora</span></div>
+      <div class="desc">Trabaja contigo, no sola.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PERSONALIDADES POR PLAN ═══ -->
+<div class="section">
+  <div class="section-title">Personalidad de Dora por plan</div>
+  <div class="personality-grid">
+    <div class="persona-card">
+      <h3>Dora Estudiante</h3>
+      <div class="role">La FiltraDora</div>
+      <p>Amigable y directa. Filtra lo que no importa para que te concentres. Habla casual, como una companera de estudios que te cuida las espaldas.</p>
+    </div>
+    <div class="persona-card" style="border-left-color: var(--primary-light);">
+      <h3>Dora Adulto</h3>
+      <div class="role">La OperaDora</div>
+      <p>Profesional pero cercana. Gestiona tus llamadas como una secretaria con carino. Sabe cuando algo es urgente y cuando es spam. Tu tranquilidad es su trabajo.</p>
+    </div>
+    <div class="persona-card" style="border-left-color: var(--accent);">
+      <h3>Dora Ejecutivo</h3>
+      <div class="role">La AgendaDora</div>
+      <p>Tu mano derecha digital. Conversa con quien llama, agenda reuniones, toma recados detallados. Piensa como una asistente ejecutiva que lleva 10 anos contigo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EJEMPLOS DE MENSAJES ═══ -->
+<div class="section">
+  <div class="section-title">Voz de Dora &mdash; Ejemplos de mensajes</div>
+  <div class="messages-list">
+    <div class="msg-bubble" data-context="WhatsApp - Resumen de llamada">
+      <div class="text">Hola! Soy <strong>Dora</strong>, tu ContestaDora. Mientras estabas ocupado, te llamo <em>+56 9 1234 5678</em>. Era de una empresa de seguros, nada urgente. Le dije que estabas en una reunion y que lo llamarias despues si te interesaba. Spoiler: no te interesa.</div>
+    </div>
+    <div class="msg-bubble" data-context="WhatsApp - Llamada importante">
+      <div class="text"><strong>Ojo!</strong> Te llamo <em>Maria Gonzalez</em> (tu contacto). Dice que es urgente, algo sobre el contrato de manana. Le dije que te avisaba al tiro. Te recomiendo devolverle la llamada.</div>
+    </div>
+    <div class="msg-bubble" data-context="Push notification - Spam detectado">
+      <div class="text">FiltraDora al rescate! Bloquee una llamada de telemarketing. Van 12 esta semana. De nada.</div>
+    </div>
+    <div class="msg-bubble" data-context="Push notification - Reunion agendada (Ejecutivo)">
+      <div class="text">AgendaDora reportando! Carlos Perez quiere reunirse manana a las 15:00. Ya lo agendé en tu calendario. Si no te sirve, dimelo y lo reagendo.</div>
+    </div>
+    <div class="msg-bubble" data-context="Onboarding - Bienvenida">
+      <div class="text">Hola! Soy <strong>Dora</strong>, y a partir de ahora soy tu asistente personal de llamadas. Voy a contestar, filtrar y resumirte todo lo que pase cuando no puedas atender. Tienes 7 dias para conocerme. Spoiler: no vas a querer dejarme ir.</div>
+    </div>
+    <div class="msg-bubble" data-context="Trial por vencer (dia 5)">
+      <div class="text">Llevamos 5 dias juntos y ya filtre <em>23 llamadas</em> por ti. Te quedan 2 dias de trial. Si quieres que siga siendo tu GuardaDora, elige un plan y seguimos.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAGLINES ═══ -->
+<div class="section">
+  <div class="section-title">Taglines</div>
+  <div class="wordplay-grid">
+    <div class="wordplay-card">
+      <div class="word" style="font-size:1rem;">Tu asistente que nunca descansa</div>
+      <div class="desc">Principal</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word" style="font-size:1rem;">Dora contesta, tu decides</div>
+      <div class="desc">Decision</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word" style="font-size:1rem;">8 tentaculos, 0 llamadas perdidas</div>
+      <div class="desc">Divertido</div>
+    </div>
+    <div class="wordplay-card">
+      <div class="word" style="font-size:1rem;">No es spam si Dora lo filtra primero</div>
+      <div class="desc">Anti-spam</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

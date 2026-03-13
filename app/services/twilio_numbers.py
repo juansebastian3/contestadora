@@ -104,7 +104,7 @@ def comprar_y_configurar_numero(
             voice_method="POST",
             status_callback=f"{webhook_base_url}/webhooks/voice/status",
             status_callback_method="POST",
-            friendly_name="FiltroLlamadas Auto",
+            friendly_name="ContestaDora Auto",
         )
 
         logger.info(f"Número Twilio comprado: {numero.phone_number} (SID: {numero.sid})")

@@ -28,15 +28,21 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════
 
 PLANES_CONFIG = {
-    "pro": {
-        "titulo": "FiltroLlamadas Pro",
-        "descripcion": "Tu voz grabada como contestadora + modo luna + 200 llamadas/mes",
+    "basico": {
+        "titulo": "ContestaDora Estudiante — Dora la FiltraDora",
+        "descripcion": "Numero propio + Dora filtra spam y te avisa lo importante. 100 llamadas/mes.",
         "precio_mensual": 4.99,
         "precio_anual": 49.99,
     },
+    "pro": {
+        "titulo": "ContestaDora Adulto — Dora la OperaDora",
+        "descripcion": "Tu voz grabada + modo luna + prompt personalizado. 300 llamadas/mes.",
+        "precio_mensual": 5.99,
+        "precio_anual": 59.99,
+    },
     "premium": {
-        "titulo": "FiltroLlamadas Premium",
-        "descripcion": "Agente IA que conversa + calendario + llamadas ilimitadas",
+        "titulo": "ContestaDora Ejecutivo — Dora la AgendaDora",
+        "descripcion": "Tu secretaria digital con 8 tentaculos: conversa, agenda y gestiona. Ilimitadas.",
         "precio_mensual": 9.99,
         "precio_anual": 99.99,
     },
@@ -95,7 +101,7 @@ def crear_preferencia_pago(
         "auto_return": "approved",
         "external_reference": external_ref,
         "notification_url": f"{base}/webhooks/mercadopago",
-        "statement_descriptor": "FiltroLlamadas",
+        "statement_descriptor": "ContestaDora",
         "expires": True,
         "expiration_date_from": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000-00:00"),
         "expiration_date_to": (datetime.now(timezone.utc) + timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.000-00:00"),

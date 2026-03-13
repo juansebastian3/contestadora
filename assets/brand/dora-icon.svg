@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1A1A2E"/>
+      <stop offset="100%" stop-color="#0F0F23"/>
+    </radialGradient>
+    <radialGradient id="body" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#8B83FF"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
+    </radialGradient>
+    <linearGradient id="tent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#4A42CC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="200" height="200" rx="40" fill="url(#bg)"/>
+
+  <!-- Tentacles (simplified) -->
+  <path d="M62,130 Q45,155 50,175 Q55,185 62,178 Q68,168 70,148" fill="none" stroke="url(#tent)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M78,135 Q68,160 72,180 Q78,188 84,180 Q88,168 85,148" fill="none" stroke="url(#tent)" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M115,135 Q125,160 121,180 Q115,188 109,180 Q105,168 108,148" fill="none" stroke="url(#tent)" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M131,130 Q148,155 143,175 Q138,185 131,178 Q125,168 123,148" fill="none" stroke="url(#tent)" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Phone left tentacle -->
+  <g transform="translate(46,172) rotate(-15)">
+    <rect x="-4" y="-7" width="8" height="14" rx="2" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1"/>
+    <circle cx="0" cy="4" r="1.2" fill="#00D9FF"/>
+  </g>
+  <!-- Phone right tentacle -->
+  <g transform="translate(147,172) rotate(15)">
+    <rect x="-4" y="-7" width="8" height="14" rx="2" fill="#1A1A2E" stroke="#00E676" stroke-width="1"/>
+    <circle cx="0" cy="4" r="1.2" fill="#00E676"/>
+  </g>
+
+  <!-- Body -->
+  <ellipse cx="96" cy="95" rx="44" ry="42" fill="url(#body)"/>
+
+  <!-- Eyes -->
+  <ellipse cx="82" cy="90" rx="10" ry="11" fill="white"/>
+  <ellipse cx="84" cy="91" rx="6" ry="7" fill="#1A1A2E"/>
+  <ellipse cx="86" cy="89" rx="2.5" ry="2.8" fill="white"/>
+
+  <ellipse cx="110" cy="90" rx="10" ry="11" fill="white"/>
+  <ellipse cx="108" cy="91" rx="6" ry="7" fill="#1A1A2E"/>
+  <ellipse cx="106" cy="89" rx="2.5" ry="2.8" fill="white"/>
+
+  <!-- Smile -->
+  <path d="M83,108 Q96,120 109,108" fill="none" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Headset band -->
+  <path d="M56,85 Q56,52 96,46 Q136,52 136,85" fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Left earpiece -->
+  <rect x="49" y="78" width="10" height="16" rx="4" fill="#00D9FF"/>
+  <rect x="51" y="81" width="6" height="10" rx="2.5" fill="#00B8D4"/>
+
+  <!-- Right earpiece -->
+  <rect x="133" y="78" width="10" height="16" rx="4" fill="#00D9FF"/>
+  <rect x="135" y="81" width="6" height="10" rx="2.5" fill="#00B8D4"/>
+
+  <!-- Mic arm -->
+  <path d="M52,92 Q42,105 46,118" fill="none" stroke="#00D9FF" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="47" cy="120" rx="4.5" ry="3.5" fill="#00D9FF"/>
+</svg>

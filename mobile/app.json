@@ -7,6 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0F0F23"
     },
     "assetBundlePatterns": [
@@ -15,16 +17,33 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.filtrollamadas.app",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "FiltroLlamadas necesita acceso al microfono para grabar tu saludo personalizado."
+      }
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F23"
       },
-      "package": "com.filtrollamadas.app"
+      "package": "com.filtrollamadas.app",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6C63FF",
+          "sounds": [],
+          "defaultChannel": "llamadas"
+        }
+      ]
     ]
   }
 }

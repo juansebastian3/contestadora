@@ -71,7 +71,7 @@ def _construir_saludo_basico(usuario: Usuario | None) -> str:
 
 def _construir_system_prompt_agente(usuario: Usuario | None, evento_calendario: dict = None) -> str:
     """System prompt para modo Premium (Agente IA que conversa)."""
-    nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofía"
+    nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Dora"
     nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
 
     base = (
@@ -102,12 +102,28 @@ def _construir_system_prompt_agente(usuario: Usuario | None, evento_calendario: 
     return base
 
 
+def _es_trial_activo(usuario: Usuario) -> bool:
+    """Verifica si el usuario Free está en periodo de trial activo."""
+    from datetime import datetime, timezone
+    if usuario.plan != PlanTipo.FREE.value:
+        return False
+    if usuario.trial_expira:
+        trial_exp = usuario.trial_expira
+        if trial_exp.tzinfo is None:
+            trial_exp = trial_exp.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) < trial_exp:
+            return True
+    return False
+
+
 def _determinar_modo_asistente(usuario: Usuario | None, numero_conocido: bool) -> str:
     """Determina el modo de asistente según el plan y contexto.
 
-    Free → siempre ASISTENTE_BASICO (Polly saluda, IA escucha)
-    Pro  → desconocidos: ASISTENTE_BASICO | conocidos/luna: CONTESTADORA (tu voz)
-    Premium → siempre AGENTE_IA (tu voz + IA conversa)
+    Free (trial activo) → experiencia Pro completa (contestadora si tiene audio)
+    Free (trial vencido) → BLOQUEADO (no debería llegar aquí)
+    Básico "Estudiante"  → ASISTENTE_BASICO (Polly saluda, IA escucha)
+    Pro "Adulto"         → desconocidos: ASISTENTE_BASICO | conocidos/luna: CONTESTADORA
+    Premium "Ejecutivo"  → siempre AGENTE_IA (tu voz + IA conversa)
     """
     if not usuario:
         return ModoAsistente.ASISTENTE_BASICO.value
@@ -116,14 +132,15 @@ def _determinar_modo_asistente(usuario: Usuario | None, numero_conocido: bool) -
 
     if plan == PlanTipo.PREMIUM.value:
         return ModoAsistente.AGENTE_IA.value
-    elif plan == PlanTipo.PRO.value:
-        # Pro: si tiene audio grabado y es conocido o modo luna → su voz
+    elif plan == PlanTipo.PRO.value or (plan == PlanTipo.FREE.value and _es_trial_activo(usuario)):
+        # Pro (y trial activo): si tiene audio y es conocido → su voz
         if usuario.audio_saludo_url and numero_conocido:
             return ModoAsistente.CONTESTADORA.value
-        # Pro desconocidos o sin audio → Polly básico
+        return ModoAsistente.ASISTENTE_BASICO.value
+    elif plan == PlanTipo.BASICO.value:
         return ModoAsistente.ASISTENTE_BASICO.value
     else:
-        # Free: siempre básico
+        # Free con trial vencido: básico (no debería recibir llamadas)
         return ModoAsistente.ASISTENTE_BASICO.value
 
 
@@ -187,6 +204,13 @@ async def contestar_llamada(request: Request):
         db.close()
 
     enviar_alerta_llamada_entrante(numero_origen)
+
+    # Push notification: llamada entrante
+    try:
+        from app.services.push_service import notificar_llamada_entrante
+        notificar_llamada_entrante(usuario, numero_origen)
+    except Exception as e_push:
+        logger.warning(f"Error push llamada entrante: {e_push}")
 
     # 4. ELEGIR MODO SEGÚN PLAN Y CONTEXTO
     modo = _determinar_modo_asistente(usuario, numero_conocido)
@@ -288,7 +312,7 @@ def _responder_agente_ia(usuario: Usuario | None, base_url: str, evento_calendar
         respuesta.play(audio_url)
     else:
         # Si no tiene audio, la IA saluda directamente
-        nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Sofia"
+        nombre_asistente = (usuario.nombre_asistente if usuario else None) or "Dora"
         nombre_owner = (usuario.nombre if usuario else None) or settings.OWNER_NAME
         voice_params = _get_voice_params(usuario)
 
@@ -477,6 +501,20 @@ async def estado_llamada(request: Request):
                 if whatsapp_sid and llamada_db:
                     llamada_db.whatsapp_enviado = 1
                     llamada_db.whatsapp_sid = whatsapp_sid
+
+                # Push notification: llamada finalizada con resumen
+                if llamada_db and llamada_db.usuario_id:
+                    try:
+                        from app.services.push_service import notificar_llamada_finalizada
+                        usuario_push = db.query(Usuario).filter(
+                            Usuario.id == llamada_db.usuario_id
+                        ).first()
+                        if usuario_push:
+                            notificar_llamada_finalizada(
+                                usuario_push, analisis, conv.numero_origen
+                            )
+                    except Exception as e_push:
+                        logger.warning(f"Error push llamada finalizada: {e_push}")
             else:
                 if llamada_db:
                     llamada_db.estado = call_status

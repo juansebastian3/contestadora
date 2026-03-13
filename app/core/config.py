@@ -61,7 +61,7 @@ class Settings:
     MERCADOPAGO_SANDBOX: bool = os.getenv("MERCADOPAGO_SANDBOX", "true").lower() == "true"
 
     # Nombre del asistente (legacy, ahora es por usuario)
-    ASSISTANT_NAME: str = "Sofía"
+    ASSISTANT_NAME: str = "Dora"
     OWNER_NAME: str = "Juan Sebastián"
 
 

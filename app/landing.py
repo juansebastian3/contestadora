@@ -1,6 +1,7 @@
-"""Landing page pública de marketing para FiltroLlamadas.
+"""Landing page pública de marketing para ContestaDora (contestadora.io).
 
 Ruta: GET / → HTML con la página de marketing
+Marca: ContestaDora — personaje Dora, pulpo operadora con auriculares.
 """
 from app.core.config import settings
 
@@ -15,8 +16,8 @@ def render_landing_html() -> str:
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FiltroLlamadas — Tu asistente IA que contesta por ti</title>
-    <meta name="description" content="FiltroLlamadas filtra y contesta tus llamadas con inteligencia artificial. Recibe resumenes por WhatsApp, graba tu propio saludo y deja que la IA gestione tu agenda.">
+    <title>ContestaDora — Tu asistente IA que contesta por ti</title>
+    <meta name="description" content="ContestaDora filtra y contesta tus llamadas con inteligencia artificial. Dora, tu pulpo operadora, contesta, filtra, resume y agenda por ti. 8 tentaculos, 0 llamadas perdidas.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -90,8 +91,9 @@ def render_landing_html() -> str:
 
         /* ═══ PLANS ═══ */
         .plans {{ padding: 80px 24px; }}
-        .plans-grid {{ display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }}
-        .plan {{ background: var(--bg-card); border-radius: 20px; padding: 36px 28px; width: 300px; border: 1px solid var(--bg-card-light); position: relative; transition: all 0.3s; }}
+        .plans-grid {{ display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; max-width: 1300px; margin: 0 auto; }}
+        .plan {{ background: var(--bg-card); border-radius: 20px; padding: 32px 24px; width: 280px; border: 1px solid var(--bg-card-light); position: relative; transition: all 0.3s; }}
+        .plan-subtitle {{ color: var(--accent); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }}
         .plan:hover {{ border-color: var(--primary); transform: translateY(-4px); }}
         .plan.featured {{ border: 2px solid var(--primary); }}
         .plan.featured::before {{ content: "RECOMENDADO"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; font-size: 0.7rem; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; }}
@@ -137,7 +139,7 @@ def render_landing_html() -> str:
 </head>
 <body>
     <nav>
-        <div class="nav-logo">FiltroLlamadas</div>
+        <div class="nav-logo"><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></div>
         <div class="nav-links">
             <a href="#como-funciona">Como funciona</a>
             <a href="#planes">Planes</a>
@@ -148,14 +150,14 @@ def render_landing_html() -> str:
 
     <!-- HERO -->
     <section class="hero">
-        <div class="hero-badge">Nuevo: Agente IA que gestiona tu agenda</div>
-        <h1>Tu llamada, <span>tu decision.</span><br>La IA contesta por ti.</h1>
-        <p class="hero-sub">FiltroLlamadas filtra, contesta y resume tus llamadas con inteligencia artificial. Recibe un resumen por WhatsApp sin interrumpir tu dia.</p>
+        <div class="hero-badge">Conoce a Dora: tu operadora IA con 8 tentaculos</div>
+        <h1>Dora contesta,<br><span>tu decides.</span></h1>
+        <p class="hero-sub">ContestaDora filtra, contesta y resume tus llamadas con inteligencia artificial. Dora se encarga de todo: contesta, filtra, avisa y agenda. Tu solo revisas el resumen por WhatsApp.</p>
         <div class="hero-buttons">
             <a href="{planes_url}" class="btn btn-primary">Empezar gratis</a>
             <a href="#como-funciona" class="btn btn-secondary">Ver como funciona</a>
         </div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 20px; opacity: 0.7;">Activar y desactivar es igual de facil. Un codigo lo activa, otro lo quita. Sin contratos.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 20px; opacity: 0.7;">8 tentaculos, 0 llamadas perdidas. Activar y desactivar es igual de facil. Sin contratos.</p>
     </section>
 
     <!-- SOCIAL PROOF -->
@@ -185,19 +187,19 @@ def render_landing_html() -> str:
                 <div class="step-icon">📱</div>
                 <div class="step-number">1</div>
                 <h3>Descarga la app</h3>
-                <p>Registrate en segundos. Recibiras un numero de telefono exclusivo para tu asistente.</p>
+                <p>Registrate en segundos. Dora te asigna un numero de telefono exclusivo para empezar.</p>
             </div>
             <div class="step">
                 <div class="step-icon">📞</div>
                 <div class="step-number">2</div>
                 <h3>Desvia tus llamadas</h3>
-                <p>Configura el desvio de llamadas en tu celular hacia tu numero FiltroLlamadas.</p>
+                <p>Configura el desvio de llamadas hacia tu numero ContestaDora. Dora toma el control.</p>
             </div>
             <div class="step">
                 <div class="step-icon">💬</div>
                 <div class="step-number">3</div>
-                <h3>Recibe resumenes</h3>
-                <p>La IA contesta, escucha y te envia un resumen por WhatsApp con nombre, motivo y prioridad.</p>
+                <h3>Dora te avisa</h3>
+                <p>Dora contesta, escucha y te envia un resumen por WhatsApp con nombre, motivo y prioridad. Tu AvisaDora personal.</p>
             </div>
         </div>
     </section>
@@ -208,34 +210,34 @@ def render_landing_html() -> str:
         <h2 class="section-title">Todo lo que necesitas</h2>
         <div class="features-grid">
             <div class="feature">
-                <div class="feature-icon">🤖</div>
-                <h3>IA que entiende</h3>
-                <p>GPT-4o analiza cada llamada en tiempo real. Categoriza, prioriza y resume automaticamente.</p>
+                <div class="feature-icon">🐙</div>
+                <h3>Dora la FiltraDora</h3>
+                <p>Con sus 8 tentaculos, Dora analiza cada llamada en tiempo real. Categoriza, prioriza y resume automaticamente.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">🎙️</div>
-                <h3>Tu voz, tu estilo</h3>
-                <p>Graba tu propio saludo personalizado. Tus contactos escuchan tu voz, no un robot generico.</p>
+                <h3>Dora la GrabaDora</h3>
+                <p>Graba tu propio saludo y Dora lo usa para contestar. Tus contactos escuchan tu voz, no un robot generico.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">📅</div>
-                <h3>Integra tu calendario</h3>
-                <p>Conecta Google Calendar u Outlook. El agente IA sabe cuando estas ocupado y actua en consecuencia.</p>
+                <h3>Dora la AgendaDora</h3>
+                <p>Conecta Google Calendar u Outlook. Dora sabe cuando estas ocupado y agenda reuniones por ti.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">🌙</div>
-                <h3>Modo Luna</h3>
-                <p>Activa el modo nocturno y todas las llamadas van al asistente. Duerme tranquilo.</p>
+                <h3>Dora la GuardaDora</h3>
+                <p>Activa el modo nocturno y Dora protege tu descanso. Todas las llamadas pasan por ella. Duerme tranquilo.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">💬</div>
-                <h3>Resumen WhatsApp</h3>
-                <p>Recibe un mensaje estructurado con nombre del llamante, motivo, categoria y prioridad.</p>
+                <h3>Dora la AvisaDora</h3>
+                <p>Recibe un resumen por WhatsApp con nombre del llamante, motivo, categoria y prioridad. Dora no se le escapa nada.</p>
             </div>
             <div class="feature">
                 <div class="feature-icon">🔒</div>
                 <h3>Privacidad total</h3>
-                <p>Sin grabaciones almacenadas. La IA transcribe en tiempo real y descarta el audio.</p>
+                <p>Dora transcribe en tiempo real y descarta el audio. Sin grabaciones almacenadas. Tu GuardaDora de confianza.</p>
             </div>
         </div>
     </section>
@@ -244,53 +246,172 @@ def render_landing_html() -> str:
     <section class="plans" id="planes">
         <div class="section-label">Planes</div>
         <h2 class="section-title">Elige tu plan</h2>
+        <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto 20px; font-size: 0.9rem;">En Chile recibimos en promedio <strong style="color:var(--accent)">~8 llamadas al dia</strong> (240/mes), de las cuales ~31 son spam. Empieza con <strong style="color:var(--green)">7 dias gratis</strong> con experiencia completa y despues elige el plan que se adapte a tu vida.</p>
+
+        <!-- PLAN CARDS -->
         <div class="plans-grid">
-            <!-- FREE -->
-            <div class="plan">
-                <div class="plan-name">Free</div>
-                <div class="plan-price">$0<span>/mes</span></div>
-                <div class="plan-desc">Perfecto para probar el servicio</div>
+            <!-- FREE TRIAL -->
+            <div class="plan" style="border-color: var(--green); border-width: 2px;">
+                <div class="plan-subtitle" style="color: var(--green);">7 dias gratis</div>
+                <div class="plan-name">Prueba gratis</div>
+                <div class="plan-price">$0<span>/7 dias</span></div>
+                <div class="plan-desc">Experiencia completa del plan Adulto durante 7 dias. Sin tarjeta, sin compromiso.</div>
                 <ul class="plan-features">
-                    <li>50 llamadas / mes</li>
-                    <li>Voz Polly como saludo</li>
-                    <li>IA escucha y transcribe</li>
-                    <li>Resumen por WhatsApp</li>
-                    <li>Clasificacion automatica</li>
+                    <li>300 llamadas durante el trial</li>
+                    <li>Numero propio temporal</li>
+                    <li>Todas las funciones Pro incluidas</li>
+                    <li>Graba tu voz, Modo Luna, analisis IA</li>
+                    <li>Resumen WhatsApp + push</li>
+                    <li>Al terminar, elige tu plan</li>
                 </ul>
-                <a href="{planes_url}" class="plan-btn secondary">Empezar gratis</a>
+                <a href="{planes_url}" class="plan-btn secondary" style="background: var(--green); color: #0f172a; font-weight: 700;">Empezar 7 dias gratis</a>
             </div>
 
-            <!-- PRO -->
-            <div class="plan featured">
-                <div class="plan-name">Pro</div>
+            <!-- BASICO / ESTUDIANTE -->
+            <div class="plan">
+                <div class="plan-subtitle">Estudiante</div>
+                <div class="plan-name">Basico</div>
                 <div class="plan-price">$4.99<span>/mes</span></div>
-                <div class="plan-desc">Tu voz grabada como contestadora</div>
+                <div class="plan-desc">Recibes unas 3 llamadas de desconocidos al dia y no quieres distraerte mientras estudias.</div>
                 <ul class="plan-features">
-                    <li>200 llamadas / mes</li>
-                    <li>Tu voz para conocidos</li>
-                    <li>Polly para desconocidos</li>
-                    <li>Prompt personalizado</li>
-                    <li>Modo Luna</li>
-                    <li>Transcripcion + resumen IA</li>
+                    <li>100 llamadas/mes (~3/dia)</li>
+                    <li>Numero propio dedicado</li>
+                    <li>IA contesta, escucha y transcribe</li>
+                    <li>Analisis: quien, por que, urgencia</li>
+                    <li>Resumen WhatsApp + push</li>
+                    <li>Categoriza: Personal, Trabajo, Spam</li>
                 </ul>
-                <a href="{planes_url}" class="plan-btn primary">Suscribirme a Pro</a>
+                <a href="{planes_url}" class="plan-btn primary">Elegir Estudiante</a>
             </div>
 
-            <!-- PREMIUM -->
+            <!-- PRO / ADULTO -->
+            <div class="plan featured">
+                <div class="plan-subtitle">Adulto</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$5.99<span>/mes</span></div>
+                <div class="plan-desc">Te llaman bastante para ofrecerte cosas, pero tienes miedo de perderte una llamada importante de un numero desconocido.</div>
+                <ul class="plan-features">
+                    <li>300 llamadas/mes (~10/dia)</li>
+                    <li>Todo lo del Estudiante +</li>
+                    <li>Graba tu voz como saludo</li>
+                    <li>Modo Luna: silencia TODO</li>
+                    <li>Prompt personalizado para la IA</li>
+                    <li>Google Calendar + Outlook</li>
+                </ul>
+                <a href="{planes_url}" class="plan-btn primary">Elegir Adulto</a>
+            </div>
+
+            <!-- PREMIUM / EJECUTIVO -->
             <div class="plan">
+                <div class="plan-subtitle">Ejecutivo</div>
                 <div class="plan-name">Premium</div>
                 <div class="plan-price">$9.99<span>/mes</span></div>
-                <div class="plan-desc">Agente IA que conversa y agenda</div>
+                <div class="plan-desc">Hay tramites y clientes que necesitan ser atendidos. Tu secretario digital filtra, envia recados y agenda reuniones por ti.</div>
                 <ul class="plan-features">
                     <li>Llamadas ilimitadas</li>
-                    <li>Tu voz + IA conversa</li>
-                    <li>Agente IA inteligente</li>
-                    <li>Google Calendar + Outlook</li>
-                    <li>Modo Luna con horario</li>
-                    <li>Soporte prioritario</li>
+                    <li>Todo lo del Adulto +</li>
+                    <li>La IA CONVERSA, no solo escucha</li>
+                    <li>Toma recados y agenda reuniones</li>
+                    <li>Consulta tu calendario en vivo</li>
+                    <li>Voces premium + soporte prioritario</li>
                 </ul>
-                <a href="{planes_url}" class="plan-btn primary">Suscribirme a Premium</a>
+                <a href="{planes_url}" class="plan-btn primary">Elegir Ejecutivo</a>
             </div>
+        </div>
+
+        <!-- TABLA COMPARATIVA -->
+        <div style="max-width: 900px; margin: 60px auto 0; overflow-x: auto;">
+            <h3 style="text-align: center; color: var(--text); margin-bottom: 20px; font-size: 1.3rem;">Compara los planes en detalle</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--primary);">
+                        <th style="text-align: left; padding: 12px 8px; color: var(--text-muted);"></th>
+                        <th style="padding: 12px 8px; color: var(--green); font-weight: 700;">Prueba gratis</th>
+                        <th style="padding: 12px 8px; color: var(--text);">Estudiante</th>
+                        <th style="padding: 12px 8px; color: var(--primary-light); font-weight: 700;">Adulto</th>
+                        <th style="padding: 12px 8px; color: var(--accent);">Ejecutivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Precio</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">$0 / 7 dias</td>
+                        <td style="padding: 10px 8px; text-align: center;">$4.99/mes</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--primary-light);">$5.99/mes</td>
+                        <td style="padding: 10px 8px; text-align: center;">$9.99/mes</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Llamadas/mes</td>
+                        <td style="padding: 10px 8px; text-align: center;">300 (trial)</td>
+                        <td style="padding: 10px 8px; text-align: center;">100 (~3/dia)</td>
+                        <td style="padding: 10px 8px; text-align: center;">300 (~10/dia)</td>
+                        <td style="padding: 10px 8px; text-align: center;">Ilimitadas</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Numero propio</td>
+                        <td style="padding: 10px 8px; text-align: center;">Temporal</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">IA contesta y transcribe</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Analisis IA + WhatsApp</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Tu voz como saludo</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Modo Luna (no molestar)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Prompt personalizado</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Calendario (Google/Outlook)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">IA conversa (no solo escucha)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Voces premium + soporte</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </section>
 
@@ -301,7 +422,7 @@ def render_landing_html() -> str:
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Y si quiero desactivarlo? Es dificil?</div>
-            <div class="faq-a">Para nada. Si quieres dejar de usar FiltroLlamadas, solo marcas ##002# en el teclado de tu telefono y listo, tus llamadas vuelven a la normalidad al instante. La app te guia paso a paso tanto para activar como para desactivar. Sin contratos, sin letra chica.</div>
+            <div class="faq-a">Para nada. Si quieres dejar de usar ContestaDora, solo marcas ##002# en el teclado de tu telefono y listo, tus llamadas vuelven a la normalidad al instante. La app te guia paso a paso tanto para activar como para desactivar. Sin contratos, sin letra chica.</div>
         </div>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
@@ -311,35 +432,35 @@ def render_landing_html() -> str:
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Se graban mis llamadas?</div>
-            <div class="faq-a">No. FiltroLlamadas transcribe en tiempo real usando speech-to-text. El audio no se almacena. Solo guardamos la transcripcion de texto y el resumen generado por la IA.</div>
+            <div class="faq-a">No. Dora transcribe en tiempo real usando speech-to-text. El audio no se almacena. Solo guardamos la transcripcion de texto y el resumen generado por la IA. Tu GuardaDora de confianza.</div>
         </div>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Puedo cancelar en cualquier momento?</div>
-            <div class="faq-a">Si, sin compromiso. Puedes cancelar tu suscripcion cuando quieras y seguiras con el plan Free, que es gratuito para siempre.</div>
+            <div class="faq-a">Si, sin compromiso. Puedes cancelar tu suscripcion cuando quieras. Dora entiende, pero te va a extranar.</div>
         </div>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Funciona en mi pais?</div>
-            <div class="faq-a">FiltroLlamadas funciona en cualquier pais donde Twilio tenga cobertura, que incluye la mayoria de paises de America Latina, Estados Unidos y Europa.</div>
+            <div class="faq-a">ContestaDora funciona en cualquier pais donde Twilio tenga cobertura, que incluye la mayoria de paises de America Latina, Estados Unidos y Europa. Dora habla todos los idiomas.</div>
         </div>
 
         <div class="faq-item" onclick="this.classList.toggle('open')">
             <div class="faq-q">Que es el Agente IA del plan Premium?</div>
-            <div class="faq-a">Es un asistente conversacional que no solo escucha sino que conversa con tus llamantes. Puede agendar reuniones, consultar tu calendario y tomar decisiones segun tus instrucciones personalizadas.</div>
+            <div class="faq-a">Es Dora en su modo mas poderoso: la AgendaDora. No solo escucha, conversa con tus llamantes, agenda reuniones, consulta tu calendario y toma decisiones segun tus instrucciones. Tu secretaria digital con 8 tentaculos.</div>
         </div>
     </section>
 
     <!-- CTA FINAL -->
     <section class="cta">
-        <h2>Deja de perder llamadas importantes</h2>
-        <p>Empieza gratis hoy. Sin tarjeta de credito, sin compromisos. Configura en 30 segundos.</p>
-        <a href="{planes_url}" class="btn btn-primary" style="font-size:1.1rem; padding:16px 40px;">Empezar gratis ahora</a>
-        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 16px;">Activarlo toma 30 segundos. Desactivarlo tambien. Sin letra chica.</p>
+        <h2>Dora ya esta lista para contestar por ti</h2>
+        <p>7 dias gratis. Sin tarjeta. Sin compromisos. Dora contesta, tu decides.</p>
+        <a href="{planes_url}" class="btn btn-primary" style="font-size:1.1rem; padding:16px 40px;">Conocer a Dora</a>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 16px;">8 tentaculos, 0 llamadas perdidas. Activar toma 30 segundos, desactivar tambien.</p>
     </section>
 
     <footer>
-        <p>FiltroLlamadas &copy; 2026. Hecho con IA en Latinoamerica.</p>
+        <p><span style="font-weight:300;">Contesta</span><span style="font-weight:800;color:#8B83FF;">Dora</span> &copy; 2026 &middot; contestadora.io &middot; Hecho con IA en Latinoamerica.</p>
         <p style="margin-top:8px;"><a href="/docs">API Docs</a> &middot; <a href="{planes_url}">Planes</a></p>
     </footer>
 </body>

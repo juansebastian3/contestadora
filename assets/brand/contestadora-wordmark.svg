@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="520" height="120">
+  <defs>
+    <linearGradient id="doraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B83FF"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
+    </linearGradient>
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6C63FF" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#00D9FF"/>
+      <stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- "Contesta" in lighter weight -->
+  <text x="20" y="75" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="52" font-weight="300" fill="#B0B0D0" letter-spacing="-1">
+    Contesta
+  </text>
+
+  <!-- "Dora" in bold, primary gradient -->
+  <text x="308" y="75" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="52" font-weight="800" fill="url(#doraGrad)" letter-spacing="-1">
+    Dora
+  </text>
+
+  <!-- Subtle accent line below -->
+  <line x1="20" y1="90" x2="500" y2="90" stroke="url(#accentLine)" stroke-width="1.5"/>
+
+  <!-- Tagline -->
+  <text x="260" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="13" fill="#6B6B8D" text-anchor="middle" letter-spacing="3">
+    TU ASISTENTE QUE NUNCA DESCANSA
+  </text>
+</svg>

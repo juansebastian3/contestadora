@@ -38,6 +38,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Rate limiting (debe ir antes de CORS para que aplique primero)
+from app.core.rate_limiter import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
+
 # CORS para la app móvil
 app.add_middleware(
     CORSMiddleware,
@@ -113,6 +117,9 @@ def _aplicar_migraciones(db):
             "mercadopago_customer_id": "VARCHAR(100)",
             "telefono_twilio": "VARCHAR(20)",
             "twilio_phone_sid": "VARCHAR(50)",
+            "expo_push_token": "VARCHAR(200)",
+            "trial_expira": "DATETIME",
+            "trial_usado": "BOOLEAN DEFAULT FALSE",
         }
 
         for col_name, col_type in nuevas_columnas.items():
@@ -132,6 +139,20 @@ async def landing_page():
     """Landing page pública de marketing."""
     from app.landing import render_landing_html
     return HTMLResponse(content=render_landing_html())
+
+
+@app.get("/terminos", response_class=HTMLResponse)
+async def terminos_page():
+    """Terminos de servicio accesibles via web."""
+    from app.legal import render_legal_html
+    return HTMLResponse(content=render_legal_html("terminos"))
+
+
+@app.get("/privacidad", response_class=HTMLResponse)
+async def privacidad_page():
+    """Politica de privacidad accesible via web."""
+    from app.legal import render_legal_html
+    return HTMLResponse(content=render_legal_html("privacidad"))
 
 
 @app.get("/api/status")

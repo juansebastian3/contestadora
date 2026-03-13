@@ -49,7 +49,7 @@ export default function RegistroScreen({ navigation, onAuthSuccess }) {
         telefono.trim(),
         password
       );
-      if (onAuthSuccess) onAuthSuccess(data.perfil);
+      if (onAuthSuccess) onAuthSuccess(data.perfil, true);
     } catch (e) {
       Alert.alert("Error", e.message || "No se pudo crear la cuenta.");
     } finally {
@@ -152,10 +152,18 @@ export default function RegistroScreen({ navigation, onAuthSuccess }) {
           </TouchableOpacity>
         </View>
 
-        {/* Texto legal */}
-        <Text style={styles.legalText}>
-          Al crear tu cuenta aceptas nuestros Términos de Servicio y Política de Privacidad.
-        </Text>
+        {/* Texto legal con links */}
+        <View style={styles.legalContainer}>
+          <Text style={styles.legalText}>Al crear tu cuenta aceptas nuestros </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("LegalAuth", { tab: "terminos" })}>
+            <Text style={styles.legalLink}>Terminos de Servicio</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalText}> y </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("LegalAuth", { tab: "privacidad" })}>
+            <Text style={styles.legalLink}>Politica de Privacidad</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalText}>.</Text>
+        </View>
 
         {/* Link a login */}
         <View style={styles.footer}>
@@ -197,9 +205,16 @@ const styles = StyleSheet.create({
   registerButtonDisabled: { opacity: 0.6 },
   registerButtonText: { color: "#fff", fontSize: fontSize.lg, fontWeight: "700" },
 
+  legalContainer: {
+    flexDirection: "row", flexWrap: "wrap", justifyContent: "center",
+    marginTop: spacing.lg, paddingHorizontal: spacing.md,
+  },
   legalText: {
-    fontSize: fontSize.xs, color: colors.textMuted, textAlign: "center",
-    marginTop: spacing.lg, lineHeight: 16, paddingHorizontal: spacing.lg,
+    fontSize: fontSize.xs, color: colors.textMuted, lineHeight: 18,
+  },
+  legalLink: {
+    fontSize: fontSize.xs, color: colors.primary, fontWeight: "600", lineHeight: 18,
+    textDecorationLine: "underline",
   },
 
   footer: { flexDirection: "row", justifyContent: "center", marginTop: spacing.lg },

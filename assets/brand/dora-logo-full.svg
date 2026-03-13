@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <!-- Gradient for body -->
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#8B83FF"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
+    </radialGradient>
+    <!-- Highlight gradient -->
+    <radialGradient id="highlight" cx="35%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#A89FFF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Tentacle gradient -->
+    <linearGradient id="tentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#4A42CC"/>
+    </linearGradient>
+    <!-- Headset gradient -->
+    <linearGradient id="headsetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D9FF"/>
+      <stop offset="100%" stop-color="#00B8D4"/>
+    </linearGradient>
+    <!-- Phone glow -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Subtle shadow -->
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F0F23" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- ═══ TENTACLES (behind body) ═══ -->
+  <!-- Tentacle 1: far left, holding phone -->
+  <path d="M140,235 Q100,270 75,310 Q60,340 80,355 Q95,365 105,345 Q115,320 130,295"
+        fill="none" stroke="url(#tentGrad)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Phone in tentacle 1 -->
+  <g transform="translate(68,340) rotate(-25)" filter="url(#glow)">
+    <rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/>
+    <rect x="-5" y="-10" width="10" height="16" rx="1" fill="#0F0F23"/>
+    <circle cx="0" cy="10" r="2" fill="#00D9FF"/>
+  </g>
+
+  <!-- Tentacle 2: left -->
+  <path d="M150,240 Q120,280 100,330 Q90,360 110,370 Q125,375 128,350 Q135,320 150,290"
+        fill="none" stroke="url(#tentGrad)" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Tentacle 3: center-left, waving -->
+  <path d="M170,250 Q155,290 145,340 Q140,365 158,372 Q172,375 170,350 Q168,320 175,290"
+        fill="none" stroke="url(#tentGrad)" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Tentacle 4: center-right -->
+  <path d="M220,250 Q235,290 245,340 Q250,365 232,372 Q218,375 220,350 Q222,320 215,290"
+        fill="none" stroke="url(#tentGrad)" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Tentacle 5: right -->
+  <path d="M240,240 Q270,280 290,330 Q300,360 280,370 Q265,375 262,350 Q255,320 240,290"
+        fill="none" stroke="url(#tentGrad)" stroke-width="13" stroke-linecap="round"/>
+
+  <!-- Tentacle 6: far right, holding phone -->
+  <path d="M250,235 Q290,270 315,310 Q330,340 310,355 Q295,365 285,345 Q275,320 260,295"
+        fill="none" stroke="url(#tentGrad)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Phone in tentacle 6 -->
+  <g transform="translate(322,340) rotate(25)" filter="url(#glow)">
+    <rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/>
+    <rect x="-5" y="-10" width="10" height="16" rx="1" fill="#0F0F23"/>
+    <circle cx="0" cy="10" r="2" fill="#00E676"/>
+  </g>
+
+  <!-- Suction cups on tentacles (decorative dots) -->
+  <circle cx="110" cy="310" r="3" fill="#8B83FF" opacity="0.5"/>
+  <circle cx="120" cy="330" r="2.5" fill="#8B83FF" opacity="0.4"/>
+  <circle cx="138" cy="335" r="2.5" fill="#8B83FF" opacity="0.4"/>
+  <circle cx="148" cy="355" r="2" fill="#8B83FF" opacity="0.3"/>
+  <circle cx="240" cy="335" r="2.5" fill="#8B83FF" opacity="0.4"/>
+  <circle cx="252" cy="355" r="2" fill="#8B83FF" opacity="0.3"/>
+  <circle cx="280" cy="310" r="3" fill="#8B83FF" opacity="0.5"/>
+  <circle cx="272" cy="330" r="2.5" fill="#8B83FF" opacity="0.4"/>
+
+  <!-- ═══ BODY (main head) ═══ -->
+  <g filter="url(#shadow)">
+    <!-- Main head shape - rounded octopus -->
+    <ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#bodyGrad)"/>
+    <!-- Highlight overlay -->
+    <ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#highlight)"/>
+    <!-- Cheeks -->
+    <ellipse cx="148" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/>
+    <ellipse cx="242" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/>
+  </g>
+
+  <!-- ═══ FACE ═══ -->
+  <!-- Eyes - big, friendly, expressive -->
+  <!-- Left eye -->
+  <ellipse cx="168" cy="185" rx="20" ry="22" fill="white"/>
+  <ellipse cx="172" cy="187" rx="12" ry="13" fill="#1A1A2E"/>
+  <ellipse cx="175" cy="184" rx="5" ry="5.5" fill="white"/>
+  <ellipse cx="168" cy="190" rx="3" ry="3" fill="white" opacity="0.4"/>
+
+  <!-- Right eye -->
+  <ellipse cx="222" cy="185" rx="20" ry="22" fill="white"/>
+  <ellipse cx="218" cy="187" rx="12" ry="13" fill="#1A1A2E"/>
+  <ellipse cx="215" cy="184" rx="5" ry="5.5" fill="white"/>
+  <ellipse cx="222" cy="190" rx="3" ry="3" fill="white" opacity="0.4"/>
+
+  <!-- Friendly smile -->
+  <path d="M170,215 Q195,240 220,215" fill="none" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
+  <!-- Small tooth/fang for cuteness -->
+  <rect x="190" y="215" width="5" height="6" rx="2" fill="white" opacity="0.9"/>
+
+  <!-- ═══ HEADSET (call center style) ═══ -->
+  <!-- Headband -->
+  <path d="M118,170 Q118,115 195,108 Q272,115 272,170"
+        fill="none" stroke="url(#headsetGrad)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Left earpiece -->
+  <g transform="translate(115,178)">
+    <rect x="-12" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/>
+    <rect x="-9" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/>
+    <rect x="-6" y="-8" width="6" height="16" rx="2" fill="#0F0F23" opacity="0.3"/>
+  </g>
+
+  <!-- Right earpiece -->
+  <g transform="translate(275,178)">
+    <rect x="-6" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/>
+    <rect x="-3" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/>
+    <rect x="0" y="-8" width="6" height="16" rx="2" fill="#0F0F23" opacity="0.3"/>
+  </g>
+
+  <!-- Microphone arm -->
+  <path d="M108,190 Q95,210 100,235 Q105,250 115,248"
+        fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Microphone -->
+  <ellipse cx="118" cy="247" rx="8" ry="6" fill="#00D9FF"/>
+  <ellipse cx="118" cy="247" rx="5" ry="3.5" fill="#00B8D4"/>
+
+  <!-- ═══ SMALL DETAILS ═══ -->
+  <!-- Little stars/sparkles around (representing calls being managed) -->
+  <g fill="#00D9FF" opacity="0.6">
+    <path d="M50,160 l3,-8 3,8 -8,-5 10,0z" transform="scale(0.8)"/>
+    <path d="M370,150 l3,-8 3,8 -8,-5 10,0z" transform="scale(0.7)"/>
+    <path d="M340,260 l2,-6 2,6 -5,-3.5 7,0z" transform="scale(0.6)"/>
+    <path d="M55,270 l2,-6 2,6 -5,-3.5 7,0z" transform="scale(0.6)"/>
+  </g>
+
+  <!-- Signal waves from microphone -->
+  <path d="M130,240 Q140,230 135,218" fill="none" stroke="#00E676" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+  <path d="M135,245 Q148,232 142,215" fill="none" stroke="#00E676" stroke-width="1.2" opacity="0.35" stroke-linecap="round"/>
+</svg>

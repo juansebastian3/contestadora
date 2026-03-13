@@ -33,7 +33,7 @@ export default function VocesScreen() {
   const vocesDisponibles = voces.filter((v) => v.tipo === "polly");
 
   const canSelect = (voz) => {
-    const orden = { free: 0, pro: 1, premium: 2 };
+    const orden = { free: 0, basico: 1, pro: 2, premium: 3 };
     return orden[userPlan] >= orden[voz.plan_minimo];
   };
 

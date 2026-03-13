@@ -38,6 +38,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["Mobile API"])
 
 
+def _verificar_trial(usuario) -> dict:
+    """Verifica estado del trial del usuario Free.
+
+    Returns dict con:
+      - trial_activo: bool (True si está en trial y no ha expirado)
+      - trial_expirado: bool (True si el trial ya pasó y no tiene plan pago)
+      - trial_expira: datetime o None
+      - dias_restantes: int
+    """
+    now = datetime.now(timezone.utc)
+
+    # Si tiene plan pago, no aplica trial
+    if usuario.plan in (PlanTipo.BASICO.value, PlanTipo.PRO.value, PlanTipo.PREMIUM.value):
+        return {"trial_activo": False, "trial_expirado": False, "trial_expira": None, "dias_restantes": 0}
+
+    # Es Free — hacer trial_expira timezone-aware si viene naive (SQLite)
+    if usuario.trial_expira:
+        trial_exp = usuario.trial_expira
+        if trial_exp.tzinfo is None:
+            trial_exp = trial_exp.replace(tzinfo=timezone.utc)
+        if now < trial_exp:
+            dias = (trial_exp - now).days
+            return {"trial_activo": True, "trial_expirado": False, "trial_expira": trial_exp, "dias_restantes": max(dias, 0)}
+        else:
+            return {"trial_activo": False, "trial_expirado": True, "trial_expira": trial_exp, "dias_restantes": 0}
+
+    # Free sin trial (legacy o trial_usado=True)
+    return {"trial_activo": False, "trial_expirado": True, "trial_expira": None, "dias_restantes": 0}
+
+
 # ═══════════════════════════════════════════════════════════
 # HELPER: convertir Llamada DB → LlamadaResponse
 # ═══════════════════════════════════════════════════════════
@@ -212,7 +242,7 @@ async def seleccionar_voz(
     if not voz:
         raise HTTPException(status_code=404, detail="Voz no encontrada")
 
-    plan_orden = {"free": 0, "pro": 1, "premium": 2}
+    plan_orden = {"free": 0, "basico": 1, "pro": 2, "premium": 3}
     if plan_orden.get(usuario.plan, 0) < plan_orden.get(voz.plan_minimo, 0):
         raise HTTPException(
             status_code=403,
@@ -267,6 +297,7 @@ async def listar_planes(db: Session = Depends(get_db)):
 @router.get("/perfil")
 async def obtener_perfil(usuario: Usuario = Depends(get_current_user)):
     """Perfil del usuario autenticado. Ya no necesita UID en la URL."""
+    trial = _verificar_trial(usuario)
     return {
         "uid": usuario.uid,
         "nombre": usuario.nombre,
@@ -274,6 +305,12 @@ async def obtener_perfil(usuario: Usuario = Depends(get_current_user)):
         "telefono": usuario.telefono,
         "plan": usuario.plan,
         "plan_expira": usuario.plan_expira,
+        "trial": {
+            "activo": trial["trial_activo"],
+            "expirado": trial["trial_expirado"],
+            "expira": trial["trial_expira"].isoformat() if trial["trial_expira"] else None,
+            "dias_restantes": trial["dias_restantes"],
+        },
         "nombre_asistente": usuario.nombre_asistente,
         "modo_filtrado": usuario.modo_filtrado,
         "horario_luna": {
@@ -617,7 +654,7 @@ def _calendar_callback_html(titulo: str, mensaje: str) -> Response:
     color = "#22c55e" if titulo == "Conectado" else "#ef4444"
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FiltroLlamadas - {titulo}</title>
+<title>ContestaDora - {titulo}</title>
 <style>body{{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f9fafb}}
 .card{{background:white;border-radius:16px;padding:40px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px}}
 h1{{color:{color};margin-bottom:12px}}p{{color:#6b7280;line-height:1.6}}</style></head>
@@ -896,7 +933,34 @@ async def obtener_url_suscripcion(
 @router.get("/health")
 async def health_check():
     """Health check. Público."""
-    return {"status": "healthy", "version": "1.0.0", "service": "FiltroLlamadas API"}
+    return {"status": "healthy", "version": "1.0.0", "service": "ContestaDora API"}
+
+
+# ═══════════════════════════════════════════════════════════
+# PUSH NOTIFICATIONS
+# ═══════════════════════════════════════════════════════════
+
+@router.post("/push-token")
+async def registrar_push_token(
+    request: Request,
+    usuario: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Registra el Expo Push Token del dispositivo del usuario.
+
+    La app envia este token cada vez que se abre para mantenerlo actualizado.
+    Se usa para enviar push notifications cuando el asistente atiende llamadas.
+    """
+    body = await request.json()
+    token = body.get("expo_push_token", "")
+
+    if not token or not token.startswith("ExponentPushToken"):
+        raise HTTPException(status_code=400, detail="Token de push invalido")
+
+    usuario.expo_push_token = token
+    db.commit()
+    logger.info(f"Push token registrado para usuario {usuario.uid}")
+    return {"status": "ok", "push_registrado": True}
 
 
 # ═══════════════════════════════════════════════════════════
@@ -915,8 +979,8 @@ async def obtener_mi_numero(
             "Configura desvio de llamadas en tu celular hacia este numero. "
             "Las llamadas desviadas seran atendidas por tu asistente IA."
         ) if usuario.telefono_twilio else (
-            "Necesitas un plan activo para recibir un numero. "
-            "Suscribete a un plan para obtener tu numero Twilio automaticamente."
+            "El plan gratuito usa un numero compartido de prueba con limite de 10 llamadas/mes. "
+            "Para tu numero propio y dedicado, activa el plan Basico o superior."
         ),
     }
 

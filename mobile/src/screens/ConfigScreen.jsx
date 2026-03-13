@@ -47,7 +47,7 @@ const CODIGOS_DESVIO = [
   },
 ];
 
-export default function ConfigScreen() {
+export default function ConfigScreen({ navigation }) {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guiaAbierta, setGuiaAbierta] = useState(false);
@@ -206,9 +206,16 @@ export default function ConfigScreen() {
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{perfil.nombre}</Text>
             <Text style={styles.profileEmail}>{perfil.email}</Text>
-            <View style={styles.planBadge}>
-              <Text style={styles.planText}>Plan {(perfil.plan || "free").toUpperCase()}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.planBadge}
+              onPress={() => navigation.navigate("Planes")}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.planText}>
+                {({ free: "Trial Gratis", basico: "Estudiante", pro: "Adulto", premium: "Ejecutivo" })[perfil.plan] || "Plan Free"}
+              </Text>
+              <Ionicons name="chevron-forward" size={12} color={colors.primary} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -330,7 +337,7 @@ export default function ConfigScreen() {
                   <View style={styles.calendarNote}>
                     <Ionicons name="calendar-outline" size={16} color={colors.primary} />
                     <Text style={styles.calendarNoteText}>
-                      Con el plan Premium, el Agente IA consulta tu calendario automaticamente. Si estas en reunion, le avisa al llamante y ofrece agendar una devolucion.
+                      Con el plan Ejecutivo, Dora se convierte en tu AgendaDora: consulta tu calendario automaticamente. Si estas en reunion, le avisa al llamante y ofrece agendar una devolucion.
                     </Text>
                   </View>
 
@@ -341,7 +348,7 @@ export default function ConfigScreen() {
                       <Text style={styles.offboardingTitle}>Quieres desactivarlo? Es igual de facil</Text>
                     </View>
                     <Text style={styles.offboardingDesc}>
-                      Si en algun momento quieres dejar de usar FiltroLlamadas, simplemente marca este codigo en tu teclado y listo. Tus llamadas volveran a la normalidad al instante.
+                      Si en algun momento quieres dejar de usar ContestaDora, simplemente marca este codigo en tu teclado y listo. Tus llamadas volveran a la normalidad al instante. Dora te va a extranar.
                     </Text>
 
                     <View style={styles.offboardingCodeContainer}>
@@ -376,7 +383,7 @@ export default function ConfigScreen() {
           ) : (
             <Text style={styles.twilioDesc}>
               {perfil.plan === "free"
-                ? "Suscribete a un plan Pro o Premium para recibir tu numero de asistente automaticamente."
+                ? "Suscribete a un plan Basico o superior para recibir tu numero de asistente dedicado."
                 : "Tu numero sera asignado automaticamente. Si no lo ves, reinicia la app."}
             </Text>
           )}
@@ -428,7 +435,7 @@ export default function ConfigScreen() {
 
       <Section title="Soporte">
         <SettingRow icon="help-circle" label="Ayuda" onPress={() => {}} />
-        <SettingRow icon="document-text" label="Terminos y privacidad" onPress={() => {}} />
+        <SettingRow icon="document-text" label="Terminos y privacidad" onPress={() => navigation.navigate("Legal")} />
       </Section>
 
       {/* Cerrar sesion */}
@@ -470,6 +477,7 @@ const styles = StyleSheet.create({
   profileName: { fontSize: fontSize.lg, fontWeight: "700", color: colors.textPrimary },
   profileEmail: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
   planBadge: {
+    flexDirection: "row", alignItems: "center",
     backgroundColor: colors.primary + "25", paddingHorizontal: 10, paddingVertical: 3,
     borderRadius: borderRadius.full, alignSelf: "flex-start", marginTop: 6,
   },

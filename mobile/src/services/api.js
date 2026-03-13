@@ -365,6 +365,9 @@ const api = {
   getMiNumero: () => api.get("/api/v1/mi-numero"),
   asignarNumero: (codigo_pais) => api.post("/api/v1/mi-numero/asignar", { codigo_pais: codigo_pais || "US" }),
 
+  // Push Notifications
+  registrarPushToken: (token) => api.post("/api/v1/push-token", { expo_push_token: token }),
+
   // Health (público)
   health: () => api.get("/api/v1/health"),
 };

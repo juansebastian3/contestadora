@@ -23,9 +23,10 @@ Base = declarative_base()
 # ═══════════════════════════════════════════════════════════
 
 class PlanTipo(str, enum.Enum):
-    FREE = "free"
-    PRO = "pro"
-    PREMIUM = "premium"
+    FREE = "free"           # Trial 7 días con experiencia Pro completa. Luego se bloquea.
+    BASICO = "basico"       # "Estudiante"
+    PRO = "pro"             # "Adulto"
+    PREMIUM = "premium"     # "Ejecutivo"
 
 
 class Categoria(str, enum.Enum):
@@ -101,11 +102,13 @@ class Usuario(Base):
     # Plan y suscripción
     plan = Column(String(20), default=PlanTipo.FREE.value)
     plan_expira = Column(DateTime, nullable=True)
+    trial_expira = Column(DateTime, nullable=True)       # Fecha fin del trial de 7 días
+    trial_usado = Column(Boolean, default=False)          # True si ya usó su trial (no puede volver a Free)
     stripe_customer_id = Column(String(100), nullable=True)
     mercadopago_customer_id = Column(String(100), nullable=True)
 
     # Configuración del asistente
-    nombre_asistente = Column(String(50), default="Sofía")
+    nombre_asistente = Column(String(50), default="Dora")
     modo_filtrado = Column(String(20), default=ModoFiltrado.DESCONOCIDOS.value)
     modo_asistente = Column(String(30), default=ModoAsistente.ASISTENTE_BASICO.value)
     horario_luna_inicio = Column(String(5), nullable=True)  # "23:00"
@@ -130,6 +133,7 @@ class Usuario(Base):
     notif_whatsapp = Column(Boolean, default=True)
     notif_push = Column(Boolean, default=True)
     notif_solo_importantes = Column(Boolean, default=False)
+    expo_push_token = Column(String(200), nullable=True)  # ExponentPushToken[xxx]
 
     # Contactos conocidos (JSON array de números)
     contactos_conocidos = Column(JSON, default=list)
@@ -327,52 +331,96 @@ def seed_voces_y_planes(db):
         ]
         db.add_all(voces)
 
-    # Actualizar planes existentes o crear nuevos
+    # ═══════════════════════════════════════════════════════════
+    # ESTRUCTURA DE PLANES (Trial + 3 pagos)
+    # ═══════════════════════════════════════════════════════════
+    #
+    # FREE = Trial 7 días con experiencia Pro completa.
+    #   Después de 7 días: se bloquea, debe elegir plan pago.
+    #   No puede volver a Free nunca más (trial_usado=True).
+    #
+    # Contexto de mercado (Chile, 2025):
+    # - Una persona promedio recibe ~8 llamadas/día = ~240/mes
+    # - De esas, ~31/mes son spam (Chile top 2 en LATAM)
+    # - Total realista (personales + trabajo + spam): 150-250/mes
+    #
     planes_config = [
         {
-            "codigo": "free", "nombre": "Gratis", "precio_mensual_usd": 0, "precio_anual_usd": 0,
-            "llamadas_mes": 30, "minutos_mes": 60,
-            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": False,
-            "modo_luna": False, "analisis_avanzado": False, "prioridad_soporte": False,
-            "descripcion": "Asistente IA básica para llamadas desconocidas",
+            "codigo": "free",
+            "nombre": "Prueba gratis 7 dias",
+            "precio_mensual_usd": 0,
+            "precio_anual_usd": 0,
+            "llamadas_mes": 300,           # Experiencia Pro completa durante el trial
+            "minutos_mes": 600,
+            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
+            "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": False,
+            "descripcion": "7 dias gratis con todas las funciones del plan Adulto. Sin tarjeta, sin compromiso.",
             "features_json": [
-                "30 llamadas/mes",
-                "Voz Polly saluda y pide recado",
-                "IA escucha y transcribe",
-                "Resumen por WhatsApp",
-                "Categorización y prioridad",
-                "Modo desconocidos",
+                "7 dias con experiencia Pro completa",
+                "Numero propio temporal",
+                "La IA contesta, transcribe y analiza",
+                "Graba tu voz como saludo",
+                "Modo Luna incluido",
+                "Resumen WhatsApp + push notification",
+                "Al terminar el trial, elige tu plan",
             ],
         },
         {
-            "codigo": "pro", "nombre": "Pro", "precio_mensual_usd": 4.99, "precio_anual_usd": 49.99,
-            "llamadas_mes": 200, "minutos_mes": 500,
+            "codigo": "basico",
+            "nombre": "Estudiante",
+            "precio_mensual_usd": 4.99,
+            "precio_anual_usd": 49.99,
+            "llamadas_mes": 100,
+            "minutos_mes": 200,
+            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": False,
+            "modo_luna": False, "analisis_avanzado": True, "prioridad_soporte": False,
+            "descripcion": "Recibes unas 3 llamadas de desconocidos al dia y no quieres distraerte mientras estudias. La IA filtra el spam y te avisa solo cuando es importante.",
+            "features_json": [
+                "100 llamadas/mes (~3 al dia, perfecto para filtrar desconocidos)",
+                "Numero propio dedicado",
+                "La IA contesta, escucha y transcribe",
+                "Analisis completo: quien llamo, por que, urgencia",
+                "Resumen por WhatsApp + push notification",
+                "Categorizacion: Personal, Trabajo, Spam, Tramite",
+            ],
+        },
+        {
+            "codigo": "pro",
+            "nombre": "Adulto",
+            "precio_mensual_usd": 5.99,
+            "precio_anual_usd": 59.99,
+            "llamadas_mes": 300,
+            "minutos_mes": 600,
             "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
             "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": False,
             "destacado": True,
-            "descripcion": "Tu voz grabada + modo Luna para filtrar todo",
+            "descripcion": "Te llaman bastante al dia para ofrecerte cosas que no necesitas, pero tienes miedo de perderte la llamada de alguien importante desde un numero desconocido. Tu contestadora personal con tu propia voz se encarga.",
             "features_json": [
-                "200 llamadas/mes",
-                "Graba tu propia contestadora",
-                "Desconocidos: Polly | Conocidos: tu voz",
-                "Modo Luna (no molestar total)",
-                "Categorización avanzada",
-                "Prompt personalizado",
+                "300 llamadas/mes (~10 al dia, cubre a una persona activa)",
+                "Todo lo del plan Estudiante +",
+                "Graba tu voz como saludo personalizado",
+                "Modo Luna: silencia TODO cuando necesites descansar",
+                "Prompt personalizado (dile a la IA como comportarse)",
+                "Integracion con Google Calendar y Outlook",
             ],
         },
         {
-            "codigo": "premium", "nombre": "Premium", "precio_mensual_usd": 9.99, "precio_anual_usd": 99.99,
-            "llamadas_mes": 9999, "minutos_mes": 9999,
-            "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,
+            "codigo": "premium",
+            "nombre": "Ejecutivo",
+            "precio_mensual_usd": 9.99,
+            "precio_anual_usd": 99.99,
+            "llamadas_mes": 9999,
+            "minutos_mes": 9999,
+            "voces_polly": True, "voces_elevenlabs": True, "voz_personalizada": True,
             "modo_luna": True, "analisis_avanzado": True, "prioridad_soporte": True,
-            "descripcion": "Agente IA que conversa, agenda y gestiona",
+            "descripcion": "Te llaman mucho para ofrecerte cosas que no necesitas, pero hay tramites y clientes que si necesitan ser atendidos. Tu secretario digital filtra, envia recados y agenda reuniones por ti, 24/7.",
             "features_json": [
-                "Llamadas ilimitadas",
-                "Agente IA conversa con llamantes",
+                "Llamadas ilimitadas (nunca te quedas sin cobertura)",
+                "Todo lo del plan Adulto +",
+                "La IA CONVERSA con quien llama, no solo escucha",
+                "Toma recados, agenda reuniones, filtra spam",
                 "Consulta tu calendario en tiempo real",
-                "Agenda reuniones automáticamente",
-                "Horarios personalizados",
-                "Google Calendar + Outlook",
+                "Voces premium ultra-realistas",
                 "Soporte prioritario",
             ],
         },

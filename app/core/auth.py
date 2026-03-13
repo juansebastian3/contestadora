@@ -210,17 +210,20 @@ async def registro(data: RegistroRequest, db: Session = Depends(get_db)):
     if not data.telefono.startswith("+"):
         raise HTTPException(status_code=400, detail="El teléfono debe incluir código de país (ej: +56912345678)")
 
-    # Crear usuario
+    # Crear usuario con trial de 7 días (experiencia Pro completa)
+    trial_fin = datetime.now(timezone.utc) + timedelta(days=7)
     nuevo = Usuario(
         nombre=data.nombre,
         email=data.email.lower().strip(),
         telefono=data.telefono.strip(),
         password_hash=_hash_password(data.password),
         plan=PlanTipo.FREE.value,
+        trial_expira=trial_fin,
+        trial_usado=False,
         modo_filtrado=ModoFiltrado.DESCONOCIDOS.value,
         voz_tipo=TipoVoz.POLLY.value,
         voz_polly_id="Polly.Mia",
-        nombre_asistente="Sofía",
+        nombre_asistente="Dora",
     )
     db.add(nuevo)
     db.commit()

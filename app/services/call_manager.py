@@ -22,7 +22,7 @@ class ConversacionActiva:
 
     def agregar_mensaje_asistente(self, texto: str):
         self.historial.append({"role": "assistant", "content": texto})
-        self.transcripcion_completa += f"\n[Sofía]: {texto}"
+        self.transcripcion_completa += f"\n[Dora]: {texto}"
 
     def obtener_duracion(self) -> float:
         return (datetime.now(timezone.utc) - self.inicio).total_seconds()

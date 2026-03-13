@@ -6,6 +6,10 @@
  * - Si NO hay token → muestra Login/Registro
  * - Si SÍ hay token → muestra la app principal con tabs
  * - Si el token expira → intenta refresh, si falla → vuelve a Login
+ *
+ * Onboarding:
+ * - Despues del primer registro, muestra 3 slides de bienvenida
+ * - Se guarda en AsyncStorage para no repetir
  */
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
@@ -14,18 +18,26 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import LoginScreen from "./screens/LoginScreen";
 import RegistroScreen from "./screens/RegistroScreen";
+import OnboardingScreen from "./screens/OnboardingScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import HistorialScreen from "./screens/HistorialScreen";
 import PersonalizacionScreen from "./screens/PersonalizacionScreen";
 import ConfigScreen from "./screens/ConfigScreen";
 import VocesScreen from "./screens/VocesScreen";
 import CalendarioScreen from "./screens/CalendarioScreen";
+import LegalScreen from "./screens/LegalScreen";
+import PlanesScreen from "./screens/PlanesScreen";
 
 import api from "./services/api";
+import { registrarPushNotifications } from "./services/notifications";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { colors } from "./utils/theme";
+
+const ONBOARDING_KEY = "@filtrollamadas_onboarding_done";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -91,9 +103,10 @@ function MainTabs() {
 }
 
 // ─── App Principal ─────────────────────────────────────────
-export default function App() {
+function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -107,6 +120,8 @@ export default function App() {
         try {
           await api.getPerfil();
           setIsAuthenticated(true);
+          // Registrar push notifications silenciosamente
+          registrarPushNotifications().catch(() => {});
         } catch {
           // Token inválido, limpiar
           await api.logout();
@@ -120,13 +135,32 @@ export default function App() {
     }
   }
 
-  function handleAuthSuccess(perfil) {
-    setIsAuthenticated(true);
+  async function handleAuthSuccess(perfil, isNewUser = false) {
+    if (isNewUser) {
+      // Primer registro → mostrar onboarding
+      setShowOnboarding(true);
+      setIsAuthenticated(true);
+    } else {
+      // Login normal → verificar si ya vio onboarding
+      const done = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (!done) {
+        setShowOnboarding(true);
+      }
+      setIsAuthenticated(true);
+    }
+    // Registrar push notifications silenciosamente
+    registrarPushNotifications().catch(() => {});
+  }
+
+  async function handleOnboardingComplete() {
+    await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+    setShowOnboarding(false);
   }
 
   function handleLogout() {
     api.logout();
     setIsAuthenticated(false);
+    setShowOnboarding(false);
   }
 
   if (isLoading) {
@@ -138,12 +172,24 @@ export default function App() {
     );
   }
 
+  // Mostrar onboarding si es usuario nuevo
+  if (isAuthenticated && showOnboarding) {
+    return (
+      <>
+        <StatusBar style="light" />
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      </>
+    );
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="light" />
       {isAuthenticated ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="Legal" component={LegalScreen} />
+          <Stack.Screen name="Planes" component={PlanesScreen} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -153,9 +199,19 @@ export default function App() {
           <Stack.Screen name="Registro">
             {(props) => <RegistroScreen {...props} onAuthSuccess={handleAuthSuccess} />}
           </Stack.Screen>
+          <Stack.Screen name="LegalAuth" component={LegalScreen} />
         </Stack.Navigator>
       )}
     </NavigationContainer>
+  );
+}
+
+// ─── Wrapper con Error Boundary ─────────────────────────────
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
 

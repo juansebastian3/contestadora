@@ -52,8 +52,8 @@ export default function LoginScreen({ navigation, onAuthSuccess }) {
           <View style={styles.logoCircle}>
             <Ionicons name="shield-checkmark" size={48} color={colors.primary} />
           </View>
-          <Text style={styles.appName}>FiltroLlamadas</Text>
-          <Text style={styles.tagline}>Tu asistente IA filtra las llamadas por ti</Text>
+          <Text style={styles.appName}><Text style={{fontWeight: "300"}}>Contesta</Text><Text style={{fontWeight: "800"}}>Dora</Text></Text>
+          <Text style={styles.tagline}>Dora contesta, tu decides</Text>
         </View>
 
         {/* Formulario */}

@@ -1,18 +1,18 @@
-"""Servicio de filtrado de llamadas - Decide si Sofía contesta o no.
+"""Servicio de filtrado de llamadas - Decide si Dora contesta o no.
 
 MODOS DE FILTRADO:
 ─────────────────────────────────────────────────────────────────
   DESCONOCIDOS (gratis):
     - Si el número está en contactos_conocidos → pasa directo (no filtra)
-    - Si el número es desconocido → Sofía contesta y filtra
+    - Si el número es desconocido → Dora contesta y filtra
 
   LUNA (pro/premium):
-    - Sofía contesta TODAS las llamadas, sin excepción
+    - Dora contesta TODAS las llamadas, sin excepción
     - Ideal para cuando estás durmiendo, en reunión, o no quieres que nadie moleste
     - Puede tener horario programado (ej: 23:00 a 07:00 automático)
 
   DESACTIVADO:
-    - Sofía no contesta nada, las llamadas pasan normal
+    - Dora no contesta nada, las llamadas pasan normal
 
 LÓGICA DE HORARIO LUNA:
 ─────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ class ResultadoFiltrado:
 
 
 def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
-    """Decide si Sofía debe contestar esta llamada.
+    """Decide si Dora debe contestar esta llamada.
 
     Args:
         usuario: El usuario dueño del número
@@ -143,7 +143,7 @@ def decidir_filtrado(usuario: Usuario, numero_origen: str) -> ResultadoFiltrado:
         else:
             return ResultadoFiltrado(
                 debe_filtrar=True,
-                motivo="Número desconocido → Sofía atiende",
+                motivo="Número desconocido → Dora atiende",
                 modo_activo=modo,
                 numero_conocido=False,
             )

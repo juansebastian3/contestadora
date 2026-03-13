@@ -42,15 +42,15 @@ def enviar_resumen_llamada(analisis: dict, numero_origen: str = "Desconocido") -
         nombre = analisis.get("nombre_contacto", None)
 
         cuerpo = (
-            f"📞 *Llamada Finalizada*\n"
+            f"🐙 *Dora reportando*\n"
             f"━━━━━━━━━━━━━━━\n"
             f"📱 *De:* {nombre or numero_origen}\n"
-            f"{emoji_cat.get(categoria, '❓')} *Categoría:* {categoria}\n"
+            f"{emoji_cat.get(categoria, '❓')} *Categoria:* {categoria}\n"
             f"{emoji_pri.get(prioridad, '🟡')} *Prioridad:* {prioridad}\n"
             f"━━━━━━━━━━━━━━━\n"
             f"📝 *Resumen:*\n{resumen}\n"
             f"━━━━━━━━━━━━━━━\n"
-            f"_Filtro de llamadas IA_ 🤖"
+            f"_Tu ContestaDora_ 🐙"
         )
 
         message = twilio_client.messages.create(
@@ -75,7 +75,7 @@ def enviar_alerta_llamada_entrante(numero_origen: str) -> str | None:
         cuerpo = (
             f"📲 *Llamada entrante*\n"
             f"De: {numero_origen}\n"
-            f"_{settings.ASSISTANT_NAME} está atendiendo..._"
+            f"_Dora esta atendiendo..._  🐙"
         )
 
         message = twilio_client.messages.create(
