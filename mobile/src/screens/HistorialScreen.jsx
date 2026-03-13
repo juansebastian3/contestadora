@@ -1,5 +1,7 @@
 /**
  * HistorialScreen - Lista filtrable de todas las llamadas
+ *
+ * Conectada al backend real. Sin datos demo.
  */
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -11,55 +13,56 @@ import {
   RefreshControl,
   Modal,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius, getCategoryColor, getPriorityColor } from "../utils/theme";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
-const FILTROS_CATEGORIA = ["Todas", "Personal", "Trabajo", "Trámite", "Marketing"];
+const FILTROS_CATEGORIA = ["Todas", "Personal", "Trabajo", "Tramite", "Marketing"];
 const FILTROS_PRIORIDAD = ["Todas", "Alta", "Media", "Baja"];
 
-// Datos demo
-const DEMO_LLAMADAS = [
-  { id: 1, numero_origen: "+56912345678", fecha_inicio: new Date().toISOString(), estado: "finalizada", categoria: "Trabajo", prioridad: "Alta", resumen: "Cliente pidió reunión urgente para sprint review.", nombre_contacto: "Carolina Méndez", whatsapp_enviado: true, transcripcion: "[Llamante]: Hola, soy Carolina Méndez, necesito hablar con Juan Sebastián urgente.\n[Sofía]: Hola Carolina, Juan Sebastián no está disponible en este momento. ¿Puedo ayudarte?\n[Llamante]: Necesitamos una reunión urgente para revisar el sprint.\n[Sofía]: Entendido, le transmitiré tu mensaje. ¿Cuándo te vendría bien?" },
-  { id: 2, numero_origen: "+56987654321", fecha_inicio: new Date(Date.now() - 3600000).toISOString(), estado: "finalizada", categoria: "Personal", prioridad: "Media", resumen: "Tu mamá confirmó almuerzo del domingo a la 1pm.", nombre_contacto: "Mamá", whatsapp_enviado: true, transcripcion: "[Llamante]: Hola Sofía, soy la mamá de Sebastián.\n[Sofía]: Hola señora, ¿cómo está?\n[Llamante]: Bien gracias, dile al Sebastián que el almuerzo del domingo es a la 1." },
-  { id: 3, numero_origen: "+56900000000", fecha_inicio: new Date(Date.now() - 7200000).toISOString(), estado: "finalizada", categoria: "Marketing", prioridad: "Baja", resumen: "Telemarketing plan de internet. Despachado por Sofía.", nombre_contacto: null, whatsapp_enviado: true, transcripcion: "[Llamante]: Buenos días, le llamo de MegaNet con una oferta especial...\n[Sofía]: Gracias por llamar, pero Juan Sebastián no está interesado. Que tenga buen día." },
-  { id: 4, numero_origen: "+56911111111", fecha_inicio: new Date(Date.now() - 14400000).toISOString(), estado: "finalizada", categoria: "Trámite", prioridad: "Alta", resumen: "Isapre requiere documentación. Plazo viernes.", nombre_contacto: "Isapre Cruz Blanca", whatsapp_enviado: true, transcripcion: "[Llamante]: Hola, llamo de Isapre Cruz Blanca, necesitamos documentación pendiente.\n[Sofía]: Entendido, ¿cuál es el plazo?\n[Llamante]: Hasta el viernes de esta semana." },
-  { id: 5, numero_origen: "+56922222222", fecha_inicio: new Date(Date.now() - 28800000).toISOString(), estado: "finalizada", categoria: "Trabajo", prioridad: "Media", resumen: "Colega preguntó por el informe mensual.", nombre_contacto: "Pedro Soto", whatsapp_enviado: true, transcripcion: "" },
-];
-
 export default function HistorialScreen() {
-  const [llamadas, setLlamadas] = useState(DEMO_LLAMADAS);
+  const { logout } = useAuth();
+  const [llamadas, setLlamadas] = useState([]);
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
   const [filtroPrioridad, setFiltroPrioridad] = useState("Todas");
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedLlamada, setSelectedLlamada] = useState(null);
 
   const fetchLlamadas = useCallback(async () => {
     try {
+      setError(null);
       const params = {};
       if (filtroCategoria !== "Todas") params.categoria = filtroCategoria;
       if (filtroPrioridad !== "Todas") params.prioridad = filtroPrioridad;
       const result = await api.getLlamadas(params);
       setLlamadas(result);
     } catch (e) {
-      setLlamadas(DEMO_LLAMADAS);
+      if (e.message?.includes("401") || e.message?.includes("Token")) {
+        await logout();
+        return;
+      }
+      setError(e.message || "No se pudieron cargar las llamadas");
+      setLlamadas([]);
+    } finally {
+      setLoading(false);
     }
-  }, [filtroCategoria, filtroPrioridad]);
+  }, [filtroCategoria, filtroPrioridad, logout]);
 
-  useEffect(() => { fetchLlamadas(); }, [filtroCategoria, filtroPrioridad]);
+  useEffect(() => {
+    setLoading(true);
+    fetchLlamadas();
+  }, [filtroCategoria, filtroPrioridad]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchLlamadas();
     setRefreshing(false);
   };
-
-  const filtered = llamadas.filter((ll) => {
-    if (filtroCategoria !== "Todas" && ll.categoria !== filtroCategoria) return false;
-    if (filtroPrioridad !== "Todas" && ll.prioridad !== filtroPrioridad) return false;
-    return true;
-  });
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -113,7 +116,7 @@ export default function HistorialScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Historial</Text>
-        <Text style={styles.count}>{filtered.length} llamadas</Text>
+        <Text style={styles.count}>{llamadas.length} llamadas</Text>
       </View>
 
       {/* Filtros Categoría */}
@@ -143,22 +146,39 @@ export default function HistorialScreen() {
         ))}
       </ScrollView>
 
+      {/* Error banner */}
+      {error && (
+        <TouchableOpacity style={styles.errorBanner} onPress={onRefresh} activeOpacity={0.7}>
+          <Ionicons name="alert-circle" size={16} color={colors.accentRed} />
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorRetry}>Reintentar</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Lista */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="call-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No hay llamadas con estos filtros</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={llamadas}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="call-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>
+                {error ? "Error al cargar" : "No hay llamadas con estos filtros"}
+              </Text>
+            </View>
+          }
+        />
+      )}
 
       {/* Modal Detalle */}
       <Modal visible={!!selectedLlamada} animationType="slide" transparent>
@@ -189,7 +209,7 @@ export default function HistorialScreen() {
 
                 {selectedLlamada.transcripcion ? (
                   <>
-                    <Text style={styles.modalSectionTitle}>Transcripción</Text>
+                    <Text style={styles.modalSectionTitle}>Transcripcion</Text>
                     <View style={styles.transcriptionBox}>
                       <Text style={styles.transcriptionText}>{selectedLlamada.transcripcion}</Text>
                     </View>
@@ -221,6 +241,17 @@ const styles = StyleSheet.create({
   filterText: { fontSize: fontSize.sm, color: colors.textSecondary },
   filterTextActive: { color: colors.textPrimary, fontWeight: "600" },
   priDot: { width: 6, height: 6, borderRadius: 3, marginRight: 4 },
+
+  errorBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: colors.accentRed + "15", marginHorizontal: spacing.lg,
+    borderRadius: borderRadius.md, padding: spacing.sm, marginBottom: spacing.sm,
+  },
+  errorText: { flex: 1, color: colors.accentRed, fontSize: fontSize.xs },
+  errorRetry: { color: colors.primary, fontSize: fontSize.xs, fontWeight: "600" },
+
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+
   card: { backgroundColor: colors.bgCard, borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.sm },
   cardHeader: { flexDirection: "row", alignItems: "center" },
   avatar: { width: 44, height: 44, borderRadius: borderRadius.md, justifyContent: "center", alignItems: "center", marginRight: spacing.sm },

@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius } from "../utils/theme";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
 // ─── Codigos GSM estandar de desvio ─────────────────────
@@ -48,6 +49,7 @@ const CODIGOS_DESVIO = [
 ];
 
 export default function ConfigScreen({ navigation }) {
+  const { user, logout } = useAuth();
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guiaAbierta, setGuiaAbierta] = useState(false);
@@ -98,7 +100,7 @@ export default function ConfigScreen({ navigation }) {
           text: "Cerrar sesion",
           style: "destructive",
           onPress: async () => {
-            await api.logout();
+            await logout();
           },
         },
       ]

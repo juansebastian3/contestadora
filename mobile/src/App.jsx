@@ -10,6 +10,10 @@
  * Onboarding:
  * - Despues del primer registro, muestra 3 slides de bienvenida
  * - Se guarda en AsyncStorage para no repetir
+ *
+ * AuthContext:
+ * - Estado global de auth accesible desde cualquier pantalla
+ * - ConfigScreen puede llamar logout() sin prop drilling
  */
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
@@ -35,6 +39,7 @@ import PlanesScreen from "./screens/PlanesScreen";
 import api from "./services/api";
 import { registrarPushNotifications } from "./services/notifications";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { colors } from "./utils/theme";
 
 const ONBOARDING_KEY = "@filtrollamadas_onboarding_done";
@@ -105,8 +110,8 @@ function MainTabs() {
 // ─── App Principal ─────────────────────────────────────────
 function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { isAuthenticated, login, logout } = useAuth();
 
   useEffect(() => {
     checkAuth();
@@ -116,50 +121,36 @@ function AppContent() {
     try {
       const authed = await api.isAuthenticated();
       if (authed) {
-        // Verificar que el token sigue siendo válido
         try {
-          await api.getPerfil();
-          setIsAuthenticated(true);
-          // Registrar push notifications silenciosamente
+          const perfil = await api.getPerfil();
+          login(perfil);
           registrarPushNotifications().catch(() => {});
         } catch {
-          // Token inválido, limpiar
-          await api.logout();
-          setIsAuthenticated(false);
+          await logout();
         }
       }
     } catch {
-      setIsAuthenticated(false);
+      // No hay token, se queda en login
     } finally {
       setIsLoading(false);
     }
   }
 
   async function handleAuthSuccess(perfil, isNewUser = false) {
+    login(perfil);
     if (isNewUser) {
-      // Primer registro → mostrar onboarding
       setShowOnboarding(true);
-      setIsAuthenticated(true);
     } else {
-      // Login normal → verificar si ya vio onboarding
       const done = await AsyncStorage.getItem(ONBOARDING_KEY);
       if (!done) {
         setShowOnboarding(true);
       }
-      setIsAuthenticated(true);
     }
-    // Registrar push notifications silenciosamente
     registrarPushNotifications().catch(() => {});
   }
 
   async function handleOnboardingComplete() {
     await AsyncStorage.setItem(ONBOARDING_KEY, "true");
-    setShowOnboarding(false);
-  }
-
-  function handleLogout() {
-    api.logout();
-    setIsAuthenticated(false);
     setShowOnboarding(false);
   }
 
@@ -172,7 +163,6 @@ function AppContent() {
     );
   }
 
-  // Mostrar onboarding si es usuario nuevo
   if (isAuthenticated && showOnboarding) {
     return (
       <>
@@ -206,11 +196,13 @@ function AppContent() {
   );
 }
 
-// ─── Wrapper con Error Boundary ─────────────────────────────
+// ─── Wrapper con Error Boundary + AuthProvider ──────────────
 export default function App() {
   return (
     <ErrorBoundary>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

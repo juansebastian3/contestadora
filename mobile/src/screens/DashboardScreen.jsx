@@ -1,5 +1,8 @@
 /**
  * DashboardScreen - Pantalla principal con estadísticas y últimas llamadas
+ *
+ * Conectada al backend real. Si no hay llamadas aún, muestra un
+ * estado vacío amigable en vez de datos fake.
  */
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -15,72 +18,48 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius, getCategoryColor, getPriorityColor } from "../utils/theme";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 
 const { width } = Dimensions.get("window");
 
-// ─── Datos de demo para previsualización ─────────────────────────
-const DEMO_DATA = {
-  total_llamadas: 47,
-  llamadas_hoy: 5,
-  spam_bloqueado: 12,
-  llamadas_importantes: 28,
-  por_categoria: { Personal: 15, Trabajo: 18, "Trámite": 8, Marketing: 6 },
-  por_prioridad: { Alta: 8, Media: 20, Baja: 19 },
-  ultimas_llamadas: [
-    {
-      id: 1, call_sid: "demo1", numero_origen: "+56912345678",
-      fecha_inicio: new Date().toISOString(), estado: "finalizada",
-      transcripcion: "", categoria: "Trabajo", prioridad: "Alta",
-      resumen: "Cliente de proyecto web pidió reunión urgente para revisar avance del sprint.",
-      nombre_contacto: "Carolina Méndez", whatsapp_enviado: true,
-    },
-    {
-      id: 2, call_sid: "demo2", numero_origen: "+56987654321",
-      fecha_inicio: new Date(Date.now() - 3600000).toISOString(), estado: "finalizada",
-      transcripcion: "", categoria: "Personal", prioridad: "Media",
-      resumen: "Tu mamá llamó para confirmar el almuerzo del domingo.",
-      nombre_contacto: "Mamá", whatsapp_enviado: true,
-    },
-    {
-      id: 3, call_sid: "demo3", numero_origen: "+56900000000",
-      fecha_inicio: new Date(Date.now() - 7200000).toISOString(), estado: "finalizada",
-      transcripcion: "", categoria: "Marketing", prioridad: "Baja",
-      resumen: "Llamada de telemarketing ofreciendo plan de internet. Dora lo despacho.",
-      nombre_contacto: null, whatsapp_enviado: true,
-    },
-    {
-      id: 4, call_sid: "demo4", numero_origen: "+56911111111",
-      fecha_inicio: new Date(Date.now() - 14400000).toISOString(), estado: "finalizada",
-      transcripcion: "", categoria: "Trámite", prioridad: "Alta",
-      resumen: "Isapre llamó por documentación pendiente. Plazo hasta el viernes.",
-      nombre_contacto: "Isapre Cruz Blanca", whatsapp_enviado: true,
-    },
-  ],
+// Estado vacío cuando no hay datos aún
+const EMPTY_DATA = {
+  total_llamadas: 0,
+  llamadas_hoy: 0,
+  spam_bloqueado: 0,
+  llamadas_importantes: 0,
+  por_categoria: {},
+  por_prioridad: {},
+  ultimas_llamadas: [],
 };
 
 export default function DashboardScreen({ navigation }) {
-  const [data, setData] = useState(DEMO_DATA);
-  const [loading, setLoading] = useState(false);
+  const { user, logout } = useAuth();
+  const [data, setData] = useState(EMPTY_DATA);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isDemo, setIsDemo] = useState(true);
-  const [userName, setUserName] = useState("Usuario");
+  const [error, setError] = useState(null);
+
+  const userName = user?.nombre?.split(" ")[0] || "Usuario";
 
   const fetchData = useCallback(async () => {
     try {
-      // Cargar perfil para nombre
-      const perfil = await api.getSavedProfile();
-      if (perfil?.nombre) setUserName(perfil.nombre.split(" ")[0]);
-
+      setError(null);
       const result = await api.getDashboard();
       setData(result);
-      setIsDemo(false);
     } catch (e) {
-      // Usar datos demo si el backend no está disponible
-      setData(DEMO_DATA);
-      setIsDemo(true);
+      if (e.message?.includes("401") || e.message?.includes("Token")) {
+        // Token expirado sin refresh posible → logout
+        await logout();
+        return;
+      }
+      setError(e.message || "No se pudieron cargar los datos");
+      setData(EMPTY_DATA);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [logout]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -99,6 +78,18 @@ export default function DashboardScreen({ navigation }) {
     { label: "Importantes", value: data.llamadas_importantes, icon: "star", color: colors.accentGreen },
   ];
 
+  const hasLlamadas = data.ultimas_llamadas.length > 0;
+  const hasCategorias = Object.keys(data.por_categoria).length > 0;
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Cargando tu dashboard...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={styles.container}
@@ -112,16 +103,23 @@ export default function DashboardScreen({ navigation }) {
           <Image source={require("../../assets/icon.png")} style={styles.headerLogo} resizeMode="contain" />
           <View>
             <Text style={styles.greeting}>Hola, {userName}</Text>
-            <Text style={styles.subtitle}>
-              {isDemo ? "Vista previa" : "Dora esta filtrando tus llamadas"}
-            </Text>
+            <Text style={styles.subtitle}>Dora esta filtrando tus llamadas</Text>
           </View>
         </View>
         <View style={styles.statusDot}>
-          <View style={[styles.dot, { backgroundColor: isDemo ? colors.accentYellow : colors.accentGreen }]} />
-          <Text style={styles.statusText}>{isDemo ? "Demo" : "Activo"}</Text>
+          <View style={[styles.dot, { backgroundColor: error ? colors.accentRed : colors.accentGreen }]} />
+          <Text style={styles.statusText}>{error ? "Error" : "Activo"}</Text>
         </View>
       </View>
+
+      {/* Error banner */}
+      {error && (
+        <TouchableOpacity style={styles.errorBanner} onPress={onRefresh} activeOpacity={0.7}>
+          <Ionicons name="alert-circle" size={18} color={colors.accentRed} />
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorRetry}>Reintentar</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Stat Cards */}
       <View style={styles.statsGrid}>
@@ -137,84 +135,109 @@ export default function DashboardScreen({ navigation }) {
       </View>
 
       {/* Distribución por categoría */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Distribución</Text>
-        <View style={styles.barContainer}>
-          {Object.entries(data.por_categoria).map(([cat, count]) => {
-            const total = Object.values(data.por_categoria).reduce((a, b) => a + b, 0);
-            const pct = total > 0 ? (count / total) * 100 : 0;
-            return (
-              <View key={cat} style={styles.barRow}>
-                <View style={styles.barLabel}>
-                  <View style={[styles.barDot, { backgroundColor: getCategoryColor(cat) }]} />
-                  <Text style={styles.barText}>{cat}</Text>
+      {hasCategorias && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Distribucion</Text>
+          <View style={styles.barContainer}>
+            {Object.entries(data.por_categoria).map(([cat, count]) => {
+              const total = Object.values(data.por_categoria).reduce((a, b) => a + b, 0);
+              const pct = total > 0 ? (count / total) * 100 : 0;
+              return (
+                <View key={cat} style={styles.barRow}>
+                  <View style={styles.barLabel}>
+                    <View style={[styles.barDot, { backgroundColor: getCategoryColor(cat) }]} />
+                    <Text style={styles.barText}>{cat}</Text>
+                  </View>
+                  <View style={styles.barTrack}>
+                    <View
+                      style={[styles.barFill, {
+                        width: `${pct}%`,
+                        backgroundColor: getCategoryColor(cat),
+                      }]}
+                    />
+                  </View>
+                  <Text style={styles.barCount}>{count}</Text>
                 </View>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[styles.barFill, {
-                      width: `${pct}%`,
-                      backgroundColor: getCategoryColor(cat),
-                    }]}
-                  />
-                </View>
-                <Text style={styles.barCount}>{count}</Text>
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
-      </View>
+      )}
 
-      {/* Últimas llamadas */}
+      {/* Últimas llamadas o estado vacío */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Últimas llamadas</Text>
-          <TouchableOpacity onPress={() => navigation?.navigate("Historial")}>
-            <Text style={styles.seeAll}>Ver todo</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Ultimas llamadas</Text>
+          {hasLlamadas && (
+            <TouchableOpacity onPress={() => navigation?.navigate("Historial")}>
+              <Text style={styles.seeAll}>Ver todo</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        {data.ultimas_llamadas.slice(0, 5).map((llamada) => (
-          <TouchableOpacity
-            key={llamada.id}
-            style={styles.callCard}
-            onPress={() => navigation?.navigate("Historial", { llamadaId: llamada.id })}
-            activeOpacity={0.7}
-          >
-            <View style={styles.callLeft}>
-              <View style={[styles.callAvatar, { backgroundColor: getCategoryColor(llamada.categoria) + "30" }]}>
-                <Ionicons
-                  name={
-                    llamada.categoria === "Trabajo" ? "briefcase" :
-                    llamada.categoria === "Personal" ? "person" :
-                    llamada.categoria === "Marketing" ? "megaphone" : "document-text"
-                  }
-                  size={18}
-                  color={getCategoryColor(llamada.categoria)}
-                />
+
+        {hasLlamadas ? (
+          data.ultimas_llamadas.slice(0, 5).map((llamada) => (
+            <TouchableOpacity
+              key={llamada.id}
+              style={styles.callCard}
+              onPress={() => navigation?.navigate("Historial", { llamadaId: llamada.id })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.callLeft}>
+                <View style={[styles.callAvatar, { backgroundColor: getCategoryColor(llamada.categoria) + "30" }]}>
+                  <Ionicons
+                    name={
+                      llamada.categoria === "Trabajo" ? "briefcase" :
+                      llamada.categoria === "Personal" ? "person" :
+                      llamada.categoria === "Marketing" ? "megaphone" : "document-text"
+                    }
+                    size={18}
+                    color={getCategoryColor(llamada.categoria)}
+                  />
+                </View>
+                <View style={styles.callInfo}>
+                  <Text style={styles.callName} numberOfLines={1}>
+                    {llamada.nombre_contacto || llamada.numero_origen}
+                  </Text>
+                  <Text style={styles.callSummary} numberOfLines={2}>
+                    {llamada.resumen}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.callInfo}>
-                <Text style={styles.callName} numberOfLines={1}>
-                  {llamada.nombre_contacto || llamada.numero_origen}
-                </Text>
-                <Text style={styles.callSummary} numberOfLines={2}>
-                  {llamada.resumen}
+              <View style={styles.callRight}>
+                <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(llamada.prioridad) + "20" }]}>
+                  <Text style={[styles.priorityText, { color: getPriorityColor(llamada.prioridad) }]}>
+                    {llamada.prioridad}
+                  </Text>
+                </View>
+                <Text style={styles.callTime}>
+                  {new Date(llamada.fecha_inicio).toLocaleTimeString("es-CL", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Text>
               </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="call-outline" size={40} color={colors.primary + "60"} />
             </View>
-            <View style={styles.callRight}>
-              <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(llamada.prioridad) + "20" }]}>
-                <Text style={[styles.priorityText, { color: getPriorityColor(llamada.prioridad) }]}>
-                  {llamada.prioridad}
-                </Text>
-              </View>
-              <Text style={styles.callTime}>
-                {new Date(llamada.fecha_inicio).toLocaleTimeString("es-CL", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+            <Text style={styles.emptyTitle}>Aun no hay llamadas</Text>
+            <Text style={styles.emptyDesc}>
+              Cuando alguien te llame y no contestes, Dora atendera y veras el resumen aqui.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => navigation?.navigate("Config")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="settings-outline" size={16} color={colors.primary} />
+              <Text style={styles.emptyButtonText}>Configurar desvio de llamadas</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={{ height: 100 }} />
@@ -224,6 +247,8 @@ export default function DashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  loadingContainer: { flex: 1, backgroundColor: colors.bg, justifyContent: "center", alignItems: "center" },
+  loadingText: { color: colors.textMuted, marginTop: spacing.md, fontSize: fontSize.sm },
   header: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     paddingHorizontal: spacing.lg, paddingTop: spacing.xxl + 20, paddingBottom: spacing.md,
@@ -234,6 +259,15 @@ const styles = StyleSheet.create({
   statusDot: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgCard, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.full },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   statusText: { fontSize: fontSize.xs, color: colors.textSecondary },
+
+  errorBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: colors.accentRed + "15", marginHorizontal: spacing.lg,
+    borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.sm,
+  },
+  errorText: { flex: 1, color: colors.accentRed, fontSize: fontSize.sm },
+  errorRetry: { color: colors.primary, fontSize: fontSize.sm, fontWeight: "600" },
+
   statsGrid: {
     flexDirection: "row", flexWrap: "wrap", paddingHorizontal: spacing.md,
     gap: spacing.sm, marginBottom: spacing.md,
@@ -272,4 +306,22 @@ const styles = StyleSheet.create({
   priorityBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: borderRadius.full },
   priorityText: { fontSize: fontSize.xs, fontWeight: "600" },
   callTime: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 4 },
+
+  emptyState: {
+    alignItems: "center", paddingVertical: spacing.xl,
+    backgroundColor: colors.bgCard, borderRadius: borderRadius.lg, padding: spacing.lg,
+  },
+  emptyIcon: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: colors.primary + "10",
+    justifyContent: "center", alignItems: "center", marginBottom: spacing.md,
+  },
+  emptyTitle: { fontSize: fontSize.lg, fontWeight: "700", color: colors.textPrimary, marginBottom: spacing.sm },
+  emptyDesc: { fontSize: fontSize.sm, color: colors.textMuted, textAlign: "center", lineHeight: 20, marginBottom: spacing.lg, paddingHorizontal: spacing.md },
+  emptyButton: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: colors.primary + "15", borderRadius: borderRadius.md,
+    paddingVertical: 12, paddingHorizontal: 20,
+  },
+  emptyButtonText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: "600" },
 });
