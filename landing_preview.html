@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ContestaDora — Tu asistente IA que contesta por ti</title>
+    <meta name="description" content="ContestaDora filtra y contesta tus llamadas con inteligencia artificial. Dora, tu pulpo operadora, contesta, filtra, resume y agenda por ti. 8 tentaculos, 0 llamadas perdidas.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --accent: #f59e0b;
+            --green: #22c55e;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-secondary: #cbd5e1;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        a { color: var(--primary-light); text-decoration: none; }
+
+        /* ═══ NAV ═══ */
+        nav { position: fixed; top: 0; width: 100%; z-index: 100; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(20px); background: rgba(15,23,42,0.8); border-bottom: 1px solid rgba(99,102,241,0.1); }
+        .nav-logo { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 10px; }
+        .nav-logo svg { width: 32px; height: 32px; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta { background: var(--primary); color: white !important; padding: 8px 20px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; -webkit-text-fill-color: white; transition: opacity 0.2s; }
+        .nav-cta:hover { opacity: 0.85; }
+
+        /* ═══ HERO ═══ */
+        .hero { text-align: center; padding: 140px 24px 80px; position: relative; }
+        .hero::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%); pointer-events: none; }
+        .hero-badge { display: inline-block; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--primary-light); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 24px; }
+        .hero h1 { font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-mascot { width: 160px; height: 160px; margin: 0 auto 28px; animation: float 4s ease-in-out infinite; }
+        .hero-mascot svg { width: 100%; height: 100%; filter: drop-shadow(0 8px 32px rgba(108,99,255,0.3)); }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .hero-sub { color: var(--text-muted); font-size: clamp(1rem, 2vw, 1.2rem); max-width: 560px; margin: 0 auto 36px; line-height: 1.7; }
+        .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 14px 32px; border-radius: 14px; font-weight: 700; font-size: 1rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; box-shadow: 0 4px 24px rgba(99,102,241,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.4); }
+        .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--bg-card-light); }
+        .btn-secondary:hover { background: var(--bg-card-light); }
+
+        /* ═══ SOCIAL PROOF ═══ */
+        .social { text-align: center; padding: 20px 24px 60px; }
+        .social-stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+        .stat { text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: 800; color: var(--primary-light); }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; }
+
+        /* ═══ HOW IT WORKS ═══ */
+        .how { padding: 80px 24px; max-width: 900px; margin: 0 auto; }
+        .section-label { color: var(--primary-light); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 12px; }
+        .section-title { font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 800; text-align: center; margin-bottom: 48px; }
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+        .step { background: var(--bg-card); border-radius: 20px; padding: 32px 24px; text-align: center; border: 1px solid transparent; transition: all 0.3s; }
+        .step:hover { border-color: var(--primary); transform: translateY(-4px); }
+        .step-number { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .step-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .step h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .step p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+        /* ═══ FEATURES ═══ */
+        .features { padding: 80px 24px; max-width: 1000px; margin: 0 auto; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .feature { background: var(--bg-card); border-radius: 16px; padding: 28px 24px; border: 1px solid rgba(99,102,241,0.08); transition: border-color 0.3s; }
+        .feature:hover { border-color: var(--primary); }
+        .feature-icon { font-size: 2rem; margin-bottom: 12px; }
+        .feature h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+        .feature p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; }
+
+        /* ═══ PLANS ═══ */
+        .plans { padding: 80px 24px; }
+        .plans-grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; max-width: 1300px; margin: 0 auto; }
+        .plan { background: var(--bg-card); border-radius: 20px; padding: 32px 24px; width: 280px; border: 1px solid var(--bg-card-light); position: relative; transition: all 0.3s; }
+        .plan-subtitle { color: var(--accent); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .plan:hover { border-color: var(--primary); transform: translateY(-4px); }
+        .plan.featured { border: 2px solid var(--primary); }
+        .plan.featured::before { content: "RECOMENDADO"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; font-size: 0.7rem; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; }
+        .plan-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+        .plan-price { font-size: 2.8rem; font-weight: 900; color: var(--primary-light); }
+        .plan-price span { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+        .plan-desc { color: var(--text-muted); font-size: 0.88rem; margin: 8px 0 20px; }
+        .plan-features { list-style: none; margin-bottom: 24px; }
+        .plan-features li { padding: 5px 0; font-size: 0.88rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+        .plan-features li::before { content: "\2713"; color: var(--green); font-weight: 700; font-size: 0.9rem; }
+        .plan-btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .plan-btn.primary { background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; }
+        .plan-btn.secondary { background: var(--bg-card-light); color: var(--text); }
+        .plan-btn:hover { opacity: 0.85; transform: scale(1.02); }
+
+        /* ═══ FAQ ═══ */
+        .faq { padding: 80px 24px; max-width: 700px; margin: 0 auto; }
+        .faq-item { background: var(--bg-card); border-radius: 14px; padding: 20px 24px; margin-bottom: 12px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.3s; }
+        .faq-item:hover { border-color: var(--primary); }
+        .faq-q { font-weight: 600; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .faq-q::after { content: "+"; font-size: 1.4rem; color: var(--primary-light); transition: transform 0.3s; }
+        .faq-item.open .faq-q::after { transform: rotate(45deg); }
+        .faq-a { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s; }
+        .faq-item.open .faq-a { max-height: 200px; padding-top: 12px; }
+
+        /* ═══ CTA FINAL ═══ */
+        .cta { text-align: center; padding: 80px 24px; position: relative; }
+        .cta::before { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; height: 300px; background: radial-gradient(circle, rgba(99,102,241,0.12), transparent 70%); pointer-events: none; }
+        .cta h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 800; margin-bottom: 16px; }
+        .cta p { color: var(--text-muted); max-width: 480px; margin: 0 auto 32px; font-size: 1.05rem; }
+
+        /* ═══ FOOTER ═══ */
+        footer { text-align: center; padding: 40px 24px; border-top: 1px solid rgba(99,102,241,0.1); color: var(--text-muted); font-size: 0.8rem; }
+        footer a { color: var(--text-secondary); }
+
+        @media (max-width: 640px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .social-stats { gap: 24px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 300px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-logo">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <defs><radialGradient id="nb" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#8B83FF"/><stop offset="100%" stop-color="#6C63FF"/></radialGradient><linearGradient id="nt" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#4A42CC"/></linearGradient></defs>
+              <path d="M62,130 Q45,155 50,175 Q55,185 62,178 Q68,168 70,148" fill="none" stroke="url(#nt)" stroke-width="7" stroke-linecap="round"/>
+              <path d="M78,135 Q68,160 72,180 Q78,188 84,180 Q88,168 85,148" fill="none" stroke="url(#nt)" stroke-width="6.5" stroke-linecap="round"/>
+              <path d="M115,135 Q125,160 121,180 Q115,188 109,180 Q105,168 108,148" fill="none" stroke="url(#nt)" stroke-width="6.5" stroke-linecap="round"/>
+              <path d="M131,130 Q148,155 143,175 Q138,185 131,178 Q125,168 123,148" fill="none" stroke="url(#nt)" stroke-width="7" stroke-linecap="round"/>
+              <ellipse cx="96" cy="95" rx="44" ry="42" fill="url(#nb)"/>
+              <ellipse cx="82" cy="90" rx="10" ry="11" fill="white"/><ellipse cx="84" cy="91" rx="6" ry="7" fill="#1A1A2E"/><ellipse cx="86" cy="89" rx="2.5" ry="2.8" fill="white"/>
+              <ellipse cx="110" cy="90" rx="10" ry="11" fill="white"/><ellipse cx="108" cy="91" rx="6" ry="7" fill="#1A1A2E"/><ellipse cx="106" cy="89" rx="2.5" ry="2.8" fill="white"/>
+              <path d="M83,108 Q96,120 109,108" fill="none" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round"/>
+              <path d="M56,85 Q56,52 96,46 Q136,52 136,85" fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+              <rect x="49" y="78" width="10" height="16" rx="4" fill="#00D9FF"/><rect x="133" y="78" width="10" height="16" rx="4" fill="#00D9FF"/>
+              <path d="M52,92 Q42,105 46,118" fill="none" stroke="#00D9FF" stroke-width="2" stroke-linecap="round"/><ellipse cx="47" cy="120" rx="4.5" ry="3.5" fill="#00D9FF"/>
+            </svg>
+            <span><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#como-funciona">Como funciona</a>
+            <a href="#planes">Planes</a>
+            <a href="#faq">FAQ</a>
+            <a href="http://localhost:8000/suscripcion/planes" class="nav-cta">Empezar gratis</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-mascot">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="hb" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#8B83FF"/><stop offset="100%" stop-color="#6C63FF"/></radialGradient>
+                <radialGradient id="hh" cx="35%" cy="30%" r="40%"><stop offset="0%" stop-color="#A89FFF" stop-opacity="0.6"/><stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/></radialGradient>
+                <linearGradient id="ht" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#4A42CC"/></linearGradient>
+                <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#00B8D4"/></linearGradient>
+              </defs>
+              <path d="M140,235 Q100,270 75,310 Q60,340 80,355 Q95,365 105,345 Q115,320 130,295" fill="none" stroke="url(#ht)" stroke-width="14" stroke-linecap="round"/>
+              <path d="M150,240 Q120,280 100,330 Q90,360 110,370 Q125,375 128,350 Q135,320 150,290" fill="none" stroke="url(#ht)" stroke-width="13" stroke-linecap="round"/>
+              <path d="M170,250 Q155,290 145,340 Q140,365 158,372 Q172,375 170,350 Q168,320 175,290" fill="none" stroke="url(#ht)" stroke-width="12" stroke-linecap="round"/>
+              <path d="M220,250 Q235,290 245,340 Q250,365 232,372 Q218,375 220,350 Q222,320 215,290" fill="none" stroke="url(#ht)" stroke-width="12" stroke-linecap="round"/>
+              <path d="M240,240 Q270,280 290,330 Q300,360 280,370 Q265,375 262,350 Q255,320 240,290" fill="none" stroke="url(#ht)" stroke-width="13" stroke-linecap="round"/>
+              <path d="M250,235 Q290,270 315,310 Q330,340 310,355 Q295,365 285,345 Q275,320 260,295" fill="none" stroke="url(#ht)" stroke-width="14" stroke-linecap="round"/>
+              <g transform="translate(68,340) rotate(-25)"><rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/><circle cx="0" cy="10" r="2" fill="#00D9FF"/></g>
+              <g transform="translate(322,340) rotate(25)"><rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/><circle cx="0" cy="10" r="2" fill="#00E676"/></g>
+              <ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#hb)"/><ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#hh)"/>
+              <ellipse cx="148" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/><ellipse cx="242" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/>
+              <ellipse cx="168" cy="185" rx="20" ry="22" fill="white"/><ellipse cx="172" cy="187" rx="12" ry="13" fill="#1A1A2E"/><ellipse cx="175" cy="184" rx="5" ry="5.5" fill="white"/>
+              <ellipse cx="222" cy="185" rx="20" ry="22" fill="white"/><ellipse cx="218" cy="187" rx="12" ry="13" fill="#1A1A2E"/><ellipse cx="215" cy="184" rx="5" ry="5.5" fill="white"/>
+              <path d="M170,215 Q195,240 220,215" fill="none" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
+              <rect x="190" y="215" width="5" height="6" rx="2" fill="white" opacity="0.9"/>
+              <path d="M118,170 Q118,115 195,108 Q272,115 272,170" fill="none" stroke="url(#hg)" stroke-width="6" stroke-linecap="round"/>
+              <g transform="translate(115,178)"><rect x="-12" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/><rect x="-9" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/></g>
+              <g transform="translate(275,178)"><rect x="-6" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/><rect x="-3" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/></g>
+              <path d="M108,190 Q95,210 100,235 Q105,250 115,248" fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+              <ellipse cx="118" cy="247" rx="8" ry="6" fill="#00D9FF"/>
+            </svg>
+        </div>
+        <div class="hero-badge">Conoce a Dora: tu operadora IA con 8 tentaculos</div>
+        <h1>Dora contesta,<br><span>tu decides.</span></h1>
+        <p class="hero-sub">ContestaDora filtra, contesta y resume tus llamadas con inteligencia artificial. Dora se encarga de todo: contesta, filtra, avisa y agenda. Tu solo revisas el resumen por WhatsApp.</p>
+        <div class="hero-buttons">
+            <a href="http://localhost:8000/suscripcion/planes" class="btn btn-primary">Empezar gratis</a>
+            <a href="#como-funciona" class="btn btn-secondary">Ver como funciona</a>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 20px; opacity: 0.7;">8 tentaculos, 0 llamadas perdidas. Activar y desactivar es igual de facil. Sin contratos.</p>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <section class="social">
+        <div class="social-stats">
+            <div class="stat">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Planes flexibles</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">30s</div>
+                <div class="stat-label">Setup inicial</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Siempre disponible</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMO FUNCIONA -->
+    <section class="how" id="como-funciona">
+        <div class="section-label">Como funciona</div>
+        <h2 class="section-title">3 pasos y listo</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon">📱</div>
+                <div class="step-number">1</div>
+                <h3>Descarga la app</h3>
+                <p>Registrate en segundos. Dora te asigna un numero de telefono exclusivo para empezar.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">📞</div>
+                <div class="step-number">2</div>
+                <h3>Desvia tus llamadas</h3>
+                <p>Configura el desvio de llamadas hacia tu numero ContestaDora. Dora toma el control.</p>
+            </div>
+            <div class="step">
+                <div class="step-icon">💬</div>
+                <div class="step-number">3</div>
+                <h3>Dora te avisa</h3>
+                <p>Dora contesta, escucha y te envia un resumen por WhatsApp con nombre, motivo y prioridad. Tu AvisaDora personal.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="section-label">Funcionalidades</div>
+        <h2 class="section-title">Todo lo que necesitas</h2>
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">🐙</div>
+                <h3>Dora la FiltraDora</h3>
+                <p>Con sus 8 tentaculos, Dora analiza cada llamada en tiempo real. Categoriza, prioriza y resume automaticamente.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎙️</div>
+                <h3>Dora la GrabaDora</h3>
+                <p>Graba tu propio saludo y Dora lo usa para contestar. Tus contactos escuchan tu voz, no un robot generico.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📅</div>
+                <h3>Dora la AgendaDora</h3>
+                <p>Conecta Google Calendar u Outlook. Dora sabe cuando estas ocupado y agenda reuniones por ti.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌙</div>
+                <h3>Dora la GuardaDora</h3>
+                <p>Activa el modo nocturno y Dora protege tu descanso. Todas las llamadas pasan por ella. Duerme tranquilo.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Dora la AvisaDora</h3>
+                <p>Recibe un resumen por WhatsApp con nombre del llamante, motivo, categoria y prioridad. Dora no se le escapa nada.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Privacidad total</h3>
+                <p>Dora transcribe en tiempo real y descarta el audio. Sin grabaciones almacenadas. Tu GuardaDora de confianza.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PLANES -->
+    <section class="plans" id="planes">
+        <div class="section-label">Planes</div>
+        <h2 class="section-title">Elige tu plan</h2>
+        <p style="color: var(--text-muted); max-width: 700px; margin: 0 auto 20px; font-size: 0.9rem;">En Chile recibimos en promedio <strong style="color:var(--accent)">~8 llamadas al dia</strong> (240/mes), de las cuales ~31 son spam. Empieza con <strong style="color:var(--green)">7 dias gratis</strong> con experiencia completa y despues elige el plan que se adapte a tu vida.</p>
+
+        <!-- PLAN CARDS -->
+        <div class="plans-grid">
+            <!-- FREE TRIAL -->
+            <div class="plan" style="border-color: var(--green); border-width: 2px;">
+                <div class="plan-subtitle" style="color: var(--green);">7 dias gratis</div>
+                <div class="plan-name">Prueba gratis</div>
+                <div class="plan-price">$0<span>/7 dias</span></div>
+                <div class="plan-desc">Experiencia completa del plan Adulto durante 7 dias. Sin tarjeta, sin compromiso.</div>
+                <ul class="plan-features">
+                    <li>300 llamadas durante el trial</li>
+                    <li>Numero propio temporal</li>
+                    <li>Todas las funciones Pro incluidas</li>
+                    <li>Graba tu voz, Modo Luna, analisis IA</li>
+                    <li>Resumen WhatsApp + push</li>
+                    <li>Al terminar, elige tu plan</li>
+                </ul>
+                <a href="http://localhost:8000/suscripcion/planes" class="plan-btn secondary" style="background: var(--green); color: #0f172a; font-weight: 700;">Empezar 7 dias gratis</a>
+            </div>
+
+            <!-- BASICO / ESTUDIANTE -->
+            <div class="plan">
+                <div class="plan-subtitle">Estudiante</div>
+                <div class="plan-name">Basico</div>
+                <div class="plan-price">$4.99<span>/mes</span></div>
+                <div class="plan-desc">Recibes unas 3 llamadas de desconocidos al dia y no quieres distraerte mientras estudias.</div>
+                <ul class="plan-features">
+                    <li>100 llamadas/mes (~3/dia)</li>
+                    <li>Numero propio dedicado</li>
+                    <li>IA contesta, escucha y transcribe</li>
+                    <li>Analisis: quien, por que, urgencia</li>
+                    <li>Resumen WhatsApp + push</li>
+                    <li>Categoriza: Personal, Trabajo, Spam</li>
+                </ul>
+                <a href="http://localhost:8000/suscripcion/planes" class="plan-btn primary">Elegir Estudiante</a>
+            </div>
+
+            <!-- PRO / ADULTO -->
+            <div class="plan featured">
+                <div class="plan-subtitle">Adulto</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$5.99<span>/mes</span></div>
+                <div class="plan-desc">Te llaman bastante para ofrecerte cosas, pero tienes miedo de perderte una llamada importante de un numero desconocido.</div>
+                <ul class="plan-features">
+                    <li>300 llamadas/mes (~10/dia)</li>
+                    <li>Todo lo del Estudiante +</li>
+                    <li>Graba tu voz como saludo</li>
+                    <li>Modo Luna: silencia TODO</li>
+                    <li>Prompt personalizado para la IA</li>
+                    <li>Google Calendar + Outlook</li>
+                </ul>
+                <a href="http://localhost:8000/suscripcion/planes" class="plan-btn primary">Elegir Adulto</a>
+            </div>
+
+            <!-- PREMIUM / EJECUTIVO -->
+            <div class="plan">
+                <div class="plan-subtitle">Ejecutivo</div>
+                <div class="plan-name">Premium</div>
+                <div class="plan-price">$9.99<span>/mes</span></div>
+                <div class="plan-desc">Hay tramites y clientes que necesitan ser atendidos. Tu secretario digital filtra, envia recados y agenda reuniones por ti.</div>
+                <ul class="plan-features">
+                    <li>Llamadas ilimitadas</li>
+                    <li>Todo lo del Adulto +</li>
+                    <li>La IA CONVERSA, no solo escucha</li>
+                    <li>Toma recados y agenda reuniones</li>
+                    <li>Consulta tu calendario en vivo</li>
+                    <li>Voces premium + soporte prioritario</li>
+                </ul>
+                <a href="http://localhost:8000/suscripcion/planes" class="plan-btn primary">Elegir Ejecutivo</a>
+            </div>
+        </div>
+
+        <!-- TABLA COMPARATIVA -->
+        <div style="max-width: 900px; margin: 60px auto 0; overflow-x: auto;">
+            <h3 style="text-align: center; color: var(--text); margin-bottom: 20px; font-size: 1.3rem;">Compara los planes en detalle</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--primary);">
+                        <th style="text-align: left; padding: 12px 8px; color: var(--text-muted);"></th>
+                        <th style="padding: 12px 8px; color: var(--green); font-weight: 700;">Prueba gratis</th>
+                        <th style="padding: 12px 8px; color: var(--text);">Estudiante</th>
+                        <th style="padding: 12px 8px; color: var(--primary-light); font-weight: 700;">Adulto</th>
+                        <th style="padding: 12px 8px; color: var(--accent);">Ejecutivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Precio</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">$0 / 7 dias</td>
+                        <td style="padding: 10px 8px; text-align: center;">$4.99/mes</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--primary-light);">$5.99/mes</td>
+                        <td style="padding: 10px 8px; text-align: center;">$9.99/mes</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Llamadas/mes</td>
+                        <td style="padding: 10px 8px; text-align: center;">300 (trial)</td>
+                        <td style="padding: 10px 8px; text-align: center;">100 (~3/dia)</td>
+                        <td style="padding: 10px 8px; text-align: center;">300 (~10/dia)</td>
+                        <td style="padding: 10px 8px; text-align: center;">Ilimitadas</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Numero propio</td>
+                        <td style="padding: 10px 8px; text-align: center;">Temporal</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">IA contesta y transcribe</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Analisis IA + WhatsApp</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Tu voz como saludo</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Modo Luna (no molestar)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Prompt personalizado</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Calendario (Google/Outlook)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">IA conversa (no solo escucha)</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 8px; color: var(--text-secondary);">Voces premium + soporte</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: #64748b;">&#10007;</td>
+                        <td style="padding: 10px 8px; text-align: center; color: var(--green);">&#10003;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq" id="faq">
+        <div class="section-label">Preguntas frecuentes</div>
+        <h2 class="section-title">FAQ</h2>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Y si quiero desactivarlo? Es dificil?</div>
+            <div class="faq-a">Para nada. Si quieres dejar de usar ContestaDora, solo marcas ##002# en el teclado de tu telefono y listo, tus llamadas vuelven a la normalidad al instante. La app te guia paso a paso tanto para activar como para desactivar. Sin contratos, sin letra chica.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Como funciona el desvio de llamadas?</div>
+            <div class="faq-a">Marcas un codigo simple en el teclado de tu telefono (la app te lo da listo) y tu operador desvia las llamadas que no contestas a tu asistente IA. Solo se desvian las que no contestas, las demas las sigues recibiendo normal.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Se graban mis llamadas?</div>
+            <div class="faq-a">No. Dora transcribe en tiempo real usando speech-to-text. El audio no se almacena. Solo guardamos la transcripcion de texto y el resumen generado por la IA. Tu GuardaDora de confianza.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Puedo cancelar en cualquier momento?</div>
+            <div class="faq-a">Si, sin compromiso. Puedes cancelar tu suscripcion cuando quieras. Dora entiende, pero te va a extranar.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Funciona en mi pais?</div>
+            <div class="faq-a">ContestaDora funciona en cualquier pais donde Twilio tenga cobertura, que incluye la mayoria de paises de America Latina, Estados Unidos y Europa. Dora habla todos los idiomas.</div>
+        </div>
+
+        <div class="faq-item" onclick="this.classList.toggle('open')">
+            <div class="faq-q">Que es el Agente IA del plan Premium?</div>
+            <div class="faq-a">Es Dora en su modo mas poderoso: la AgendaDora. No solo escucha, conversa con tus llamantes, agenda reuniones, consulta tu calendario y toma decisiones segun tus instrucciones. Tu secretaria digital con 8 tentaculos.</div>
+        </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="cta">
+        <h2>Dora ya esta lista para contestar por ti</h2>
+        <p>7 dias gratis. Sin tarjeta. Sin compromisos. Dora contesta, tu decides.</p>
+        <a href="http://localhost:8000/suscripcion/planes" class="btn btn-primary" style="font-size:1.1rem; padding:16px 40px;">Conocer a Dora</a>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 16px;">8 tentaculos, 0 llamadas perdidas. Activar toma 30 segundos, desactivar tambien.</p>
+    </section>
+
+    <footer>
+        <p><span style="font-weight:300;">Contesta</span><span style="font-weight:800;color:#8B83FF;">Dora</span> &copy; 2026 &middot; contestadora.io &middot; Hecho con IA en Latinoamerica</p>
+        <p style="margin-top:8px;"><a href="/docs">API Docs</a> &middot; <a href="http://localhost:8000/suscripcion/planes">Planes</a></p>
+    </footer>
+</body>
+</html>

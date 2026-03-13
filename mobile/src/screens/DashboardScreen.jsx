@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius, getCategoryColor, getPriorityColor } from "../utils/theme";
@@ -107,11 +108,14 @@ export default function DashboardScreen({ navigation }) {
     >
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hola, {userName}</Text>
-          <Text style={styles.subtitle}>
-            {isDemo ? "Vista previa" : "Dora esta filtrando tus llamadas"}
-          </Text>
+        <View style={{flexDirection: "row", alignItems: "center"}}>
+          <Image source={require("../../assets/icon.png")} style={styles.headerLogo} resizeMode="contain" />
+          <View>
+            <Text style={styles.greeting}>Hola, {userName}</Text>
+            <Text style={styles.subtitle}>
+              {isDemo ? "Vista previa" : "Dora esta filtrando tus llamadas"}
+            </Text>
+          </View>
         </View>
         <View style={styles.statusDot}>
           <View style={[styles.dot, { backgroundColor: isDemo ? colors.accentYellow : colors.accentGreen }]} />
@@ -224,6 +228,7 @@ const styles = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     paddingHorizontal: spacing.lg, paddingTop: spacing.xxl + 20, paddingBottom: spacing.md,
   },
+  headerLogo: { width: 40, height: 40, borderRadius: 10, marginRight: spacing.sm },
   greeting: { fontSize: fontSize.xl, fontWeight: "700", color: colors.textPrimary },
   subtitle: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
   statusDot: { flexDirection: "row", alignItems: "center", backgroundColor: colors.bgCard, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.full },

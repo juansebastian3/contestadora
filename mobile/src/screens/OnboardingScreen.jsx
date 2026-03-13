@@ -12,6 +12,7 @@ import {
   FlatList,
   TouchableOpacity,
   Animated,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius } from "../utils/theme";
@@ -23,6 +24,7 @@ const SLIDES = [
     key: "bienvenida",
     icon: "shield-checkmark",
     iconColor: colors.primary,
+    useDoraImage: true,
     titulo: "Hola! Soy Dora",
     subtitulo: "Tu ContestaDora personal. Un pulpo con 8 tentaculos lista para contestar, filtrar y resumir tus llamadas.",
     puntos: [
@@ -88,9 +90,17 @@ export default function OnboardingScreen({ onComplete }) {
     return (
       <View style={styles.slide}>
         {/* Icono principal */}
-        <View style={[styles.iconCircle, { backgroundColor: item.iconColor + "15" }]}>
-          <Ionicons name={item.icon} size={56} color={item.iconColor} />
-        </View>
+        {item.useDoraImage ? (
+          <Image
+            source={require("../../assets/icon.png")}
+            style={styles.doraImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={[styles.iconCircle, { backgroundColor: item.iconColor + "15" }]}>
+            <Ionicons name={item.icon} size={56} color={item.iconColor} />
+          </View>
+        )}
 
         {/* Titulo */}
         <Text style={styles.slideTitulo}>{item.titulo}</Text>
@@ -241,6 +251,12 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  doraImage: {
+    width: 130,
+    height: 130,
+    borderRadius: 30,
     marginBottom: spacing.lg,
   },
   slideTitulo: {

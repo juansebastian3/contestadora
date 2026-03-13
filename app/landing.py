@@ -40,7 +40,8 @@ def render_landing_html() -> str:
 
         /* ═══ NAV ═══ */
         nav {{ position: fixed; top: 0; width: 100%; z-index: 100; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(20px); background: rgba(15,23,42,0.8); border-bottom: 1px solid rgba(99,102,241,0.1); }}
-        .nav-logo {{ font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .nav-logo {{ font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 10px; }}
+        .nav-logo svg {{ width: 32px; height: 32px; flex-shrink: 0; }}
         .nav-links {{ display: flex; gap: 24px; align-items: center; }}
         .nav-links a {{ color: var(--text-muted); font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }}
         .nav-links a:hover {{ color: var(--text); }}
@@ -53,6 +54,9 @@ def render_landing_html() -> str:
         .hero-badge {{ display: inline-block; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: var(--primary-light); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 24px; }}
         .hero h1 {{ font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }}
         .hero h1 span {{ background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .hero-mascot {{ width: 160px; height: 160px; margin: 0 auto 28px; animation: float 4s ease-in-out infinite; }}
+        .hero-mascot svg {{ width: 100%; height: 100%; filter: drop-shadow(0 8px 32px rgba(108,99,255,0.3)); }}
+        @keyframes float {{ 0%,100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-12px); }} }}
         .hero-sub {{ color: var(--text-muted); font-size: clamp(1rem, 2vw, 1.2rem); max-width: 560px; margin: 0 auto 36px; line-height: 1.7; }}
         .hero-buttons {{ display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }}
         .btn {{ padding: 14px 32px; border-radius: 14px; font-weight: 700; font-size: 1rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }}
@@ -139,7 +143,23 @@ def render_landing_html() -> str:
 </head>
 <body>
     <nav>
-        <div class="nav-logo"><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></div>
+        <div class="nav-logo">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <defs><radialGradient id="nb" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#8B83FF"/><stop offset="100%" stop-color="#6C63FF"/></radialGradient><linearGradient id="nt" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#4A42CC"/></linearGradient></defs>
+              <path d="M62,130 Q45,155 50,175 Q55,185 62,178 Q68,168 70,148" fill="none" stroke="url(#nt)" stroke-width="7" stroke-linecap="round"/>
+              <path d="M78,135 Q68,160 72,180 Q78,188 84,180 Q88,168 85,148" fill="none" stroke="url(#nt)" stroke-width="6.5" stroke-linecap="round"/>
+              <path d="M115,135 Q125,160 121,180 Q115,188 109,180 Q105,168 108,148" fill="none" stroke="url(#nt)" stroke-width="6.5" stroke-linecap="round"/>
+              <path d="M131,130 Q148,155 143,175 Q138,185 131,178 Q125,168 123,148" fill="none" stroke="url(#nt)" stroke-width="7" stroke-linecap="round"/>
+              <ellipse cx="96" cy="95" rx="44" ry="42" fill="url(#nb)"/>
+              <ellipse cx="82" cy="90" rx="10" ry="11" fill="white"/><ellipse cx="84" cy="91" rx="6" ry="7" fill="#1A1A2E"/><ellipse cx="86" cy="89" rx="2.5" ry="2.8" fill="white"/>
+              <ellipse cx="110" cy="90" rx="10" ry="11" fill="white"/><ellipse cx="108" cy="91" rx="6" ry="7" fill="#1A1A2E"/><ellipse cx="106" cy="89" rx="2.5" ry="2.8" fill="white"/>
+              <path d="M83,108 Q96,120 109,108" fill="none" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round"/>
+              <path d="M56,85 Q56,52 96,46 Q136,52 136,85" fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+              <rect x="49" y="78" width="10" height="16" rx="4" fill="#00D9FF"/><rect x="133" y="78" width="10" height="16" rx="4" fill="#00D9FF"/>
+              <path d="M52,92 Q42,105 46,118" fill="none" stroke="#00D9FF" stroke-width="2" stroke-linecap="round"/><ellipse cx="47" cy="120" rx="4.5" ry="3.5" fill="#00D9FF"/>
+            </svg>
+            <span><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></span>
+        </div>
         <div class="nav-links">
             <a href="#como-funciona">Como funciona</a>
             <a href="#planes">Planes</a>
@@ -150,6 +170,35 @@ def render_landing_html() -> str:
 
     <!-- HERO -->
     <section class="hero">
+        <div class="hero-mascot">
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="hb" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#8B83FF"/><stop offset="100%" stop-color="#6C63FF"/></radialGradient>
+                <radialGradient id="hh" cx="35%" cy="30%" r="40%"><stop offset="0%" stop-color="#A89FFF" stop-opacity="0.6"/><stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/></radialGradient>
+                <linearGradient id="ht" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#4A42CC"/></linearGradient>
+                <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00D9FF"/><stop offset="100%" stop-color="#00B8D4"/></linearGradient>
+              </defs>
+              <path d="M140,235 Q100,270 75,310 Q60,340 80,355 Q95,365 105,345 Q115,320 130,295" fill="none" stroke="url(#ht)" stroke-width="14" stroke-linecap="round"/>
+              <path d="M150,240 Q120,280 100,330 Q90,360 110,370 Q125,375 128,350 Q135,320 150,290" fill="none" stroke="url(#ht)" stroke-width="13" stroke-linecap="round"/>
+              <path d="M170,250 Q155,290 145,340 Q140,365 158,372 Q172,375 170,350 Q168,320 175,290" fill="none" stroke="url(#ht)" stroke-width="12" stroke-linecap="round"/>
+              <path d="M220,250 Q235,290 245,340 Q250,365 232,372 Q218,375 220,350 Q222,320 215,290" fill="none" stroke="url(#ht)" stroke-width="12" stroke-linecap="round"/>
+              <path d="M240,240 Q270,280 290,330 Q300,360 280,370 Q265,375 262,350 Q255,320 240,290" fill="none" stroke="url(#ht)" stroke-width="13" stroke-linecap="round"/>
+              <path d="M250,235 Q290,270 315,310 Q330,340 310,355 Q295,365 285,345 Q275,320 260,295" fill="none" stroke="url(#ht)" stroke-width="14" stroke-linecap="round"/>
+              <g transform="translate(68,340) rotate(-25)"><rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/><circle cx="0" cy="10" r="2" fill="#00D9FF"/></g>
+              <g transform="translate(322,340) rotate(25)"><rect x="-8" y="-14" width="16" height="28" rx="3" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.5"/><circle cx="0" cy="10" r="2" fill="#00E676"/></g>
+              <ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#hb)"/><ellipse cx="195" cy="190" rx="85" ry="78" fill="url(#hh)"/>
+              <ellipse cx="148" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/><ellipse cx="242" cy="210" rx="14" ry="10" fill="#FF9100" opacity="0.2"/>
+              <ellipse cx="168" cy="185" rx="20" ry="22" fill="white"/><ellipse cx="172" cy="187" rx="12" ry="13" fill="#1A1A2E"/><ellipse cx="175" cy="184" rx="5" ry="5.5" fill="white"/>
+              <ellipse cx="222" cy="185" rx="20" ry="22" fill="white"/><ellipse cx="218" cy="187" rx="12" ry="13" fill="#1A1A2E"/><ellipse cx="215" cy="184" rx="5" ry="5.5" fill="white"/>
+              <path d="M170,215 Q195,240 220,215" fill="none" stroke="#1A1A2E" stroke-width="3" stroke-linecap="round"/>
+              <rect x="190" y="215" width="5" height="6" rx="2" fill="white" opacity="0.9"/>
+              <path d="M118,170 Q118,115 195,108 Q272,115 272,170" fill="none" stroke="url(#hg)" stroke-width="6" stroke-linecap="round"/>
+              <g transform="translate(115,178)"><rect x="-12" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/><rect x="-9" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/></g>
+              <g transform="translate(275,178)"><rect x="-6" y="-15" width="18" height="30" rx="6" fill="#00D9FF"/><rect x="-3" y="-12" width="12" height="24" rx="4" fill="#00B8D4"/></g>
+              <path d="M108,190 Q95,210 100,235 Q105,250 115,248" fill="none" stroke="#00D9FF" stroke-width="3.5" stroke-linecap="round"/>
+              <ellipse cx="118" cy="247" rx="8" ry="6" fill="#00D9FF"/>
+            </svg>
+        </div>
         <div class="hero-badge">Conoce a Dora: tu operadora IA con 8 tentaculos</div>
         <h1>Dora contesta,<br><span>tu decides.</span></h1>
         <p class="hero-sub">ContestaDora filtra, contesta y resume tus llamadas con inteligencia artificial. Dora se encarga de todo: contesta, filtra, avisa y agenda. Tu solo revisas el resumen por WhatsApp.</p>
@@ -460,7 +509,7 @@ def render_landing_html() -> str:
     </section>
 
     <footer>
-        <p><span style="font-weight:300;">Contesta</span><span style="font-weight:800;color:#8B83FF;">Dora</span> &copy; 2026 &middot; contestadora.io &middot; Hecho con IA en Latinoamerica.</p>
+        <p><span style="font-weight:300;">Contesta</span><span style="font-weight:800;color:#8B83FF;">Dora</span> &copy; 2026 &middot; contestadora.io &middot; Hecho con IA en Latinoamerica</p>
         <p style="margin-top:8px;"><a href="/docs">API Docs</a> &middot; <a href="{planes_url}">Planes</a></p>
     </footer>
 </body>

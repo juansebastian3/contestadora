@@ -13,6 +13,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, fontSize, borderRadius } from "../utils/theme";
@@ -49,9 +50,11 @@ export default function LoginScreen({ navigation, onAuthSuccess }) {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Logo y nombre */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="shield-checkmark" size={48} color={colors.primary} />
-          </View>
+          <Image
+            source={require("../../assets/icon.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.appName}><Text style={{fontWeight: "300"}}>Contesta</Text><Text style={{fontWeight: "800"}}>Dora</Text></Text>
           <Text style={styles.tagline}>Dora contesta, tu decides</Text>
         </View>
@@ -117,10 +120,8 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: "center", padding: spacing.lg },
 
   logoContainer: { alignItems: "center", marginBottom: 40 },
-  logoCircle: {
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: colors.primary + "15",
-    justifyContent: "center", alignItems: "center",
+  logoImage: {
+    width: 100, height: 100, borderRadius: 24,
     marginBottom: spacing.md,
   },
   appName: { fontSize: fontSize.hero, fontWeight: "800", color: colors.textPrimary },
