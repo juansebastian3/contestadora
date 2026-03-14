@@ -21,6 +21,7 @@ from app.api.webhooks import router as webhooks_router
 from app.api.mobile_api import router as mobile_router
 from app.api.websocket_stream import router as ws_router
 from app.api.suscripcion_web import router as suscripcion_router
+from app.api.pagos import router as pagos_router
 from app.models.database import SessionLocal, seed_voces_y_planes
 
 # Configurar logging
@@ -67,6 +68,7 @@ app.include_router(webhooks_router)    # /webhooks/voice/* (sin auth - Twilio)
 app.include_router(mobile_router)      # /api/v1/* (con auth JWT)
 app.include_router(ws_router)          # /ws/* (WebSocket)
 app.include_router(suscripcion_router) # /suscripcion/* + /webhooks/mercadopago
+app.include_router(pagos_router)       # /api/v1/pagos/* + /webhooks/flow
 
 # --- NUEVA RUTA DE HEALTHCHECK PARA RAILWAY ---
 @app.get("/api/v1/health")
@@ -126,6 +128,20 @@ def _aplicar_migraciones(db):
             if col_name not in columnas_usuario:
                 db.execute(text(f"ALTER TABLE usuarios ADD COLUMN {col_name} {col_type}"))
                 logger.info(f"  + Columna '{col_name}' agregada a usuarios")
+
+        # Migraciones para tabla suscripciones (pasarelas de pago)
+        if "suscripciones" in inspector.get_table_names():
+            columnas_suscripcion = [col["name"] for col in inspector.get_columns("suscripciones")]
+            nuevas_col_suscripcion = {
+                "tbk_buy_order": "VARCHAR(100)",
+                "tbk_authorization_code": "VARCHAR(50)",
+                "flow_order": "VARCHAR(100)",
+                "flow_token": "VARCHAR(200)",
+            }
+            for col_name, col_type in nuevas_col_suscripcion.items():
+                if col_name not in columnas_suscripcion:
+                    db.execute(text(f"ALTER TABLE suscripciones ADD COLUMN {col_name} {col_type}"))
+                    logger.info(f"  + Columna '{col_name}' agregada a suscripciones")
 
         db.commit()
         logger.info("✅ Migraciones aplicadas")

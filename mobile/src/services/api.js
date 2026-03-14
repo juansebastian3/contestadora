@@ -361,6 +361,11 @@ const api = {
   getSuscripcionUrl: () => api.get("/api/v1/suscripcion/url"),
   getSuscripcionEstado: () => api.get("/api/v1/suscripcion/estado"),
 
+  // ═══ PASARELAS DE PAGO (MercadoPago, Transbank, Flow.cl) ═══
+  getPasarelas: () => api.get("/api/v1/pagos/pasarelas"),
+  crearPago: (pasarela, plan, periodo = "mensual") =>
+    api.post("/api/v1/pagos/crear", { pasarela, plan, periodo }),
+
   // Numero Twilio
   getMiNumero: () => api.get("/api/v1/mi-numero"),
   asignarNumero: (codigo_pais) => api.post("/api/v1/mi-numero/asignar", { codigo_pais: codigo_pais || "US" }),

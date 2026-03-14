@@ -60,6 +60,16 @@ class Settings:
     MERCADOPAGO_PUBLIC_KEY: str = os.getenv("MERCADOPAGO_PUBLIC_KEY", "")
     MERCADOPAGO_SANDBOX: bool = os.getenv("MERCADOPAGO_SANDBOX", "true").lower() == "true"
 
+    # Transbank / WebPay (Chile)
+    TRANSBANK_COMMERCE_CODE: str = os.getenv("TRANSBANK_COMMERCE_CODE", "")
+    TRANSBANK_API_KEY: str = os.getenv("TRANSBANK_API_KEY", "")
+    TRANSBANK_SANDBOX: bool = os.getenv("TRANSBANK_SANDBOX", "true").lower() == "true"
+
+    # Flow.cl (Chile)
+    FLOW_API_KEY: str = os.getenv("FLOW_API_KEY", "")
+    FLOW_SECRET_KEY: str = os.getenv("FLOW_SECRET_KEY", "")
+    FLOW_SANDBOX: bool = os.getenv("FLOW_SANDBOX", "true").lower() == "true"
+
     # Nombre del asistente (legacy, ahora es por usuario)
     ASSISTANT_NAME: str = "Dora"
     OWNER_NAME: str = "Juan Sebastián"

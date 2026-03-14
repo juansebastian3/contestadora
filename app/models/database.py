@@ -267,7 +267,7 @@ class Suscripcion(Base):
     plan_codigo = Column(String(20), nullable=False)  # pro, premium
 
     # Origen del pago
-    origen = Column(String(20), nullable=False)  # mercadopago, apple_iap, google_play
+    origen = Column(String(20), nullable=False)  # mercadopago, transbank, flow
     estado = Column(String(20), default=EstadoSuscripcion.PENDIENTE.value)
 
     # MercadoPago
@@ -275,6 +275,14 @@ class Suscripcion(Base):
     mp_payment_id = Column(String(100), nullable=True)
     mp_subscription_id = Column(String(100), nullable=True)
     mp_external_reference = Column(String(100), nullable=True, index=True)
+
+    # Transbank / WebPay
+    tbk_buy_order = Column(String(100), nullable=True)
+    tbk_authorization_code = Column(String(50), nullable=True)
+
+    # Flow.cl
+    flow_order = Column(String(100), nullable=True)
+    flow_token = Column(String(200), nullable=True)
 
     # Periodo
     fecha_inicio = Column(DateTime, nullable=True)
