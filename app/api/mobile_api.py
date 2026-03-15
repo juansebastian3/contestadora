@@ -930,12 +930,6 @@ async def obtener_url_suscripcion(
     return {"url": url, "plan_actual": usuario.plan}
 
 
-@router.get("/health")
-async def health_check():
-    """Health check. Público."""
-    return {"status": "healthy", "version": "1.0.0", "service": "ContestaDora API"}
-
-
 # ═══════════════════════════════════════════════════════════
 # PUSH NOTIFICATIONS
 # ═══════════════════════════════════════════════════════════
