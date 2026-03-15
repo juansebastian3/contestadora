@@ -382,6 +382,7 @@ def _resultado_html(titulo: str, mensaje: str, color: str) -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ContestaDora - {titulo}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, sans-serif; background: #0f172a; color: #e2e8f0;

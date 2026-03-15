@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1A1A2E"/>
+      <stop offset="100%" stop-color="#0F0F23"/>
+    </radialGradient>
+    <radialGradient id="body" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#8B83FF"/>
+      <stop offset="100%" stop-color="#6C63FF"/>
+    </radialGradient>
+    <linearGradient id="tent" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6C63FF"/>
+      <stop offset="100%" stop-color="#4A42CC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="200" height="200" rx="40" fill="url(#bg)"/>
+
+  <!-- Tentacles -->
+  <!-- Far left -->
+  <path d="M62,128 Q42,155 48,178 Q54,190 62,180 Q68,168 70,148" fill="none" stroke="url(#tent)" stroke-width="7" stroke-linecap="round"/>
+  <!-- Inner left -->
+  <path d="M76,133 Q62,158 68,180 Q74,190 82,180 Q86,168 83,148" fill="none" stroke="url(#tent)" stroke-width="6.5" stroke-linecap="round"/>
+  <!-- Inner right -->
+  <path d="M117,133 Q131,158 125,180 Q119,190 111,180 Q107,168 110,148" fill="none" stroke="url(#tent)" stroke-width="6.5" stroke-linecap="round"/>
+  <!-- Far right -->
+  <path d="M131,128 Q151,155 145,178 Q139,190 131,180 Q125,168 123,148" fill="none" stroke="url(#tent)" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Phone far left tentacle -->
+  <g transform="translate(42,176) rotate(-18)">
+    <rect x="-5" y="-8" width="10" height="16" rx="2" fill="#1A1A2E" stroke="#00D9FF" stroke-width="1.2"/>
+    <circle cx="0" cy="5" r="1.3" fill="#00D9FF"/>
+  </g>
+  <!-- Phone inner left tentacle -->
+  <g transform="translate(64,185) rotate(-5)">
+    <rect x="-5" y="-8" width="10" height="16" rx="2" fill="#1A1A2E" stroke="#00E676" stroke-width="1.2"/>
+    <circle cx="0" cy="5" r="1.3" fill="#00E676"/>
+  </g>
+  <!-- Phone inner right tentacle -->
+  <g transform="translate(129,185) rotate(5)">
+    <rect x="-5" y="-8" width="10" height="16" rx="2" fill="#1A1A2E" stroke="#FF6D00" stroke-width="1.2"/>
+    <circle cx="0" cy="5" r="1.3" fill="#FF6D00"/>
+  </g>
+  <!-- Phone far right tentacle -->
+  <g transform="translate(151,176) rotate(18)">
+    <rect x="-5" y="-8" width="10" height="16" rx="2" fill="#1A1A2E" stroke="#FF9100" stroke-width="1.2"/>
+    <circle cx="0" cy="5" r="1.3" fill="#FF9100"/>
+  </g>
+
+  <!-- Body -->
+  <ellipse cx="96" cy="92" rx="46" ry="44" fill="url(#body)"/>
+
+  <!-- Sunglasses - dark rectangular shades -->
+  <!-- Left lens -->
+  <rect x="63" y="78" width="28" height="22" rx="4" fill="#1A1A2E" stroke="#2D2D4E" stroke-width="1"/>
+  <!-- Right lens -->
+  <rect x="101" y="78" width="28" height="22" rx="4" fill="#1A1A2E" stroke="#2D2D4E" stroke-width="1"/>
+  <!-- Bridge -->
+  <path d="M91,88 Q96,84 101,88" fill="none" stroke="#2D2D4E" stroke-width="2" stroke-linecap="round"/>
+  <!-- Left arm -->
+  <path d="M63,85 L55,82" stroke="#2D2D4E" stroke-width="2" stroke-linecap="round"/>
+  <!-- Right arm -->
+  <path d="M129,85 L137,82" stroke="#2D2D4E" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Smile -->
+  <path d="M80,110 Q96,120 112,110" fill="none" stroke="#1A1A2E" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Headset band (dark/subtle) -->
+  <path d="M54,82 Q54,48 96,42 Q138,48 138,82" fill="none" stroke="#3D3D5C" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Left earpiece -->
+  <rect x="47" y="76" width="11" height="16" rx="4" fill="#3D3D5C"/>
+  <rect x="49" y="79" width="7" height="10" rx="3" fill="#2D2D4E"/>
+
+  <!-- Right earpiece -->
+  <rect x="134" y="76" width="11" height="16" rx="4" fill="#3D3D5C"/>
+  <rect x="136" y="79" width="7" height="10" rx="3" fill="#2D2D4E"/>
+</svg>

@@ -655,6 +655,7 @@ def _calendar_callback_html(titulo: str, mensaje: str) -> Response:
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ContestaDora - {titulo}</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>body{{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f9fafb}}
 .card{{background:white;border-radius:16px;padding:40px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:400px}}
 h1{{color:{color};margin-bottom:12px}}p{{color:#6b7280;line-height:1.6}}</style></head>

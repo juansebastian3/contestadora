@@ -15,6 +15,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
+from fastapi.responses import JSONResponse as _JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from app.core.config import settings
 from app.core.auth import router as auth_router
 from app.api.webhooks import router as webhooks_router
@@ -52,6 +55,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ═══════════════════════════════════════════════════════════
+# GLOBAL EXCEPTION HANDLER - Asegura respuestas JSON para la API
+# ═══════════════════════════════════════════════════════════
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Captura excepciones no controladas y devuelve JSON en vez de HTML 500."""
+    logger.error(f"Error no controlado en {request.url.path}: {exc}", exc_info=True)
+    return _JSONResponse(
+        status_code=500,
+        content={"detail": f"Error interno del servidor: {type(exc).__name__}"},
+    )
+
+
+# Servir assets de branding (logos, favicons)
+brand_dir = Path("./assets/brand")
+if brand_dir.exists():
+    app.mount("/brand", StaticFiles(directory=str(brand_dir)), name="brand")
+
+
+@app.get("/favicon.ico")
+@app.get("/favicon.svg")
+async def favicon():
+    """Servir el favicon de Dora."""
+    from fastapi.responses import FileResponse
+    svg_path = Path("./assets/brand/dora-icon-v2.svg")
+    if svg_path.exists():
+        return FileResponse(svg_path, media_type="image/svg+xml")
+    return _JSONResponse(status_code=404, content={"detail": "Favicon not found"})
+
 
 # Servir archivos de audio generados por ElevenLabs
 audio_dir = Path("./audio_cache")

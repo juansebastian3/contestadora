@@ -252,6 +252,7 @@ def _render_planes_html() -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ContestaDora - Planes y Precios</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }}
@@ -444,9 +445,19 @@ def _render_planes_html() -> str:
                     headers: {{"Content-Type": "application/json"}},
                     body: JSON.stringify({{ email, password }})
                 }});
-                const data = await resp.json();
+
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {{
+                    data = await resp.json();
+                }} else {{
+                    const text = await resp.text();
+                    console.error("Respuesta no-JSON del servidor:", resp.status, text.substring(0, 200));
+                    data = {{ detail: "Error del servidor (código " + resp.status + "). Intenta de nuevo." }};
+                }}
+
                 if (!resp.ok) {{
-                    errorEl.textContent = data.detail || "Error al iniciar sesion";
+                    errorEl.textContent = data.detail || "Error al iniciar sesion (código " + resp.status + ")";
                     errorEl.style.display = "block";
                     return;
                 }}
@@ -458,7 +469,8 @@ def _render_planes_html() -> str:
                 document.getElementById("btn-pro").disabled = false;
                 document.getElementById("btn-premium").disabled = false;
             }} catch (e) {{
-                errorEl.textContent = "Error de conexion";
+                console.error("Error en login:", e);
+                errorEl.textContent = "Error de conexion: " + (e.message || "No se pudo contactar al servidor");
                 errorEl.style.display = "block";
             }}
         }}
@@ -503,9 +515,19 @@ def _render_planes_html() -> str:
                         token: token,
                     }})
                 }});
-                const data = await resp.json();
+
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {{
+                    data = await resp.json();
+                }} else {{
+                    const text = await resp.text();
+                    console.error("Respuesta no-JSON:", resp.status, text.substring(0, 200));
+                    data = {{ detail: "Error del servidor (código " + resp.status + ")" }};
+                }}
+
                 if (!resp.ok) {{
-                    alert(data.detail || "Error al crear pago");
+                    alert(data.detail || "Error al crear pago (código " + resp.status + ")");
                     btn.disabled = false;
                     btn.textContent = "Suscribirme a " + plan.charAt(0).toUpperCase() + plan.slice(1);
                     return;
@@ -513,7 +535,8 @@ def _render_planes_html() -> str:
                 // Redirigir a MercadoPago
                 window.location.href = data.payment_url;
             }} catch (e) {{
-                alert("Error de conexion. Intenta de nuevo.");
+                console.error("Error en pago:", e);
+                alert("Error de conexion: " + (e.message || "No se pudo contactar al servidor"));
                 btn.disabled = false;
                 btn.textContent = "Suscribirme a " + plan.charAt(0).toUpperCase() + plan.slice(1);
             }}
@@ -539,6 +562,7 @@ def _render_resultado_html(titulo: str, mensaje: str, color: str, icono: str) ->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ContestaDora - {titulo}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }}
@@ -569,6 +593,7 @@ def _render_registro_html() -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ContestaDora - Crear Cuenta</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }}
@@ -677,10 +702,20 @@ def _render_registro_html() -> str:
                     headers: {{"Content-Type": "application/json"}},
                     body: JSON.stringify({{ nombre, email, telefono, password }})
                 }});
-                const data = await resp.json();
+
+                // Intentar parsear JSON, pero manejar si el servidor devuelve otra cosa
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {{
+                    data = await resp.json();
+                }} else {{
+                    const text = await resp.text();
+                    console.error("Respuesta no-JSON del servidor:", resp.status, text.substring(0, 200));
+                    data = {{ detail: "Error del servidor (código " + resp.status + "). Intenta de nuevo." }};
+                }}
 
                 if (!resp.ok) {{
-                    errorEl.textContent = data.detail || "Error al crear la cuenta";
+                    errorEl.textContent = data.detail || "Error al crear la cuenta (código " + resp.status + ")";
                     errorEl.style.display = "block";
                     btn.disabled = false;
                     btn.textContent = "Crear cuenta gratis";
@@ -697,7 +732,8 @@ def _render_registro_html() -> str:
                 }}, 1500);
 
             }} catch (e) {{
-                errorEl.textContent = "Error de conexion. Intenta de nuevo.";
+                console.error("Error en registro:", e);
+                errorEl.textContent = "Error de conexion: " + (e.message || "No se pudo contactar al servidor") + ". Verifica tu internet e intenta de nuevo.";
                 errorEl.style.display = "block";
                 btn.disabled = false;
                 btn.textContent = "Crear cuenta gratis";

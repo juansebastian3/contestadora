@@ -17,6 +17,7 @@ def render_landing_html() -> str:
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ContestaDora — Tu agente IA que filtra y contesta llamadas por ti</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="description" content="ContestaDora filtra, contesta y resume tus llamadas con IA. Ahorra casi 2 horas diarias entre interrupciones y pérdida de concentración. Dora, tu agente secreto, maneja todo por ti. Prueba 7 días gratis.">
     <meta name="keywords" content="filtro de llamadas, IA llamadas, contestador inteligente, bloquear spam, asistente virtual llamadas, ContestaDora, productividad, ahorro de tiempo">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
