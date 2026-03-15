@@ -1,0 +1,1 @@
+Esta carpeta tiene una aplicación y página web creada por mi sobre una aplicación que contesta las llamadas de tu telofono con un desvio de llamada a twilio, para así luego entregar un resumen, cateorigzar y priorizar cada una. El plan ejecutvio incluso puede agendar y entender tu calendario.

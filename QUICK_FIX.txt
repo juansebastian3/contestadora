@@ -1,0 +1,44 @@
+═══════════════════════════════════════════════════════════════════════════════
+   FIX RÁPIDO: PROBLEMA DE REGISTRO EN CONTESTADORA
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA:
+  ❌ "No puedo crear una cuenta en la página web"
+  ❌ Error: sqlite3.OperationalError: no such column
+
+CAUSA:
+  La base de datos SQLite local estaba desactualizada
+
+SOLUCIÓN APLICADA ✅
+  1. Eliminé el archivo filtro_llamadas.db viejo
+  2. Ejecuté fix_database.py para recrear la DB con schema correcto
+  3. Verificué que todo funciona insertando un usuario de prueba
+
+QUÉ PASÓ:
+  ✅ Nueva DB creada con 37 columnas en tabla usuarios
+  ✅ Voces y planes inicializados
+  ✅ Prueba de inserción exitosa
+  ✅ Listo para producción
+
+PRÓXIMOS PASOS:
+  1. Reinicia el servidor FastAPI:
+     python -m uvicorn app.main:app --reload
+
+  2. Prueba crear una cuenta:
+     Email: mimail@example.com
+     Teléfono: +56987654321 (¡CON + al inicio!)
+     Password: cualquiera con 6+ caracteres
+
+  3. ¡Listo! Deberías recibir tokens JWT
+
+ARCHIVOS GENERADOS:
+  • fix_database.py          - Script que reparó la DB (si necesitas usarlo otra vez)
+  • diagnostico_registro.py  - Script para diagnosticar problemas futuros
+  • SOLUCION_REGISTRO.md     - Documentación completa
+
+IMPORTANTE - TELÉFONO:
+  ✅ CORRECTO:   +56987654321
+  ❌ INCORRECTO: 987654321 (sin +)
+  ❌ INCORRECTO: +56 987654321 (con espacios)
+
+═══════════════════════════════════════════════════════════════════════════════
