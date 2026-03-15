@@ -540,7 +540,6 @@ def render_landing_html() -> str:
                         <div style="font-size: 0.7rem; color: var(--text-muted);">laborales/ano</div>
                     </div>
                 </div>
-                <a href="{planes_url}" style="display: block; text-align: center; margin-top: 14px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); color: var(--primary-light); padding: 10px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; text-decoration: none;">Plan Estudiante &middot; $4.99/mes</a>
             </div>
 
             <!-- ADULTO / PRO -->
@@ -583,7 +582,6 @@ def render_landing_html() -> str:
                     </div>
                 </div>
                 <p style="text-align: center; color: var(--red); font-size: 0.82rem; font-weight: 600; margin-top: 8px;">Eso es un mes entero de trabajo perdido al ano.</p>
-                <a href="{planes_url}" style="display: block; text-align: center; margin-top: 10px; background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; text-decoration: none; box-shadow: 0 4px 16px rgba(99,102,241,0.3);">Plan Pro &middot; $6.99/mes</a>
             </div>
 
             <!-- EJECUTIVO -->
@@ -625,7 +623,6 @@ def render_landing_html() -> str:
                     </div>
                 </div>
                 <p style="text-align: center; color: var(--red); font-size: 0.82rem; font-weight: 600; margin-top: 8px;">Media jornada laboral perdida CADA DIA.</p>
-                <a href="{planes_url}" style="display: block; text-align: center; margin-top: 10px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: var(--accent); padding: 10px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; text-decoration: none;">Plan Ejecutivo &middot; $9.99/mes</a>
             </div>
         </div>
 
