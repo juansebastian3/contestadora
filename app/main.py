@@ -22,6 +22,7 @@ from app.api.mobile_api import router as mobile_router
 from app.api.websocket_stream import router as ws_router
 from app.api.suscripcion_web import router as suscripcion_router
 from app.api.pagos import router as pagos_router
+from app.api.growth_api import router as growth_router
 from app.models.database import SessionLocal, seed_voces_y_planes
 
 # Configurar logging
@@ -69,6 +70,7 @@ app.include_router(mobile_router)      # /api/v1/* (con auth JWT)
 app.include_router(ws_router)          # /ws/* (WebSocket)
 app.include_router(suscripcion_router) # /suscripcion/* + /webhooks/mercadopago
 app.include_router(pagos_router)       # /api/v1/pagos/* + /webhooks/flow
+app.include_router(growth_router)      # /api/v1/referido, descuento, precios, admin/*
 
 # --- NUEVA RUTA DE HEALTHCHECK PARA RAILWAY ---
 @app.get("/api/v1/health")
@@ -94,10 +96,58 @@ async def startup_event():
 
         seed_voces_y_planes(db)
         logger.info("✅ Voces y planes inicializados")
+
+        # Seed precios geográficos PPP
+        from app.services.geo_pricing_service import seed_precios_geograficos
+        seed_precios_geograficos(db)
+        logger.info("✅ Precios geográficos PPP inicializados")
+
+        # Crear código de descuento de bienvenida si no existe
+        _seed_codigos_descuento(db)
     except Exception as e:
         logger.error(f"Error en seed: {e}")
     finally:
         db.close()
+
+
+def _seed_codigos_descuento(db):
+    """Crea códigos de descuento iniciales para campañas de retención."""
+    from app.models.database import CodigoDescuento
+    from datetime import timedelta
+
+    codigos_iniciales = [
+        {
+            "codigo": "DORA50-WELCOME",
+            "descripcion": "50% off primer mes - Drip campaign día 14",
+            "tipo": "porcentaje",
+            "valor": 50,
+            "usos_maximos": 0,  # Ilimitado
+        },
+        {
+            "codigo": "DORA-AMIGO",
+            "descripcion": "1 mes gratis por referido",
+            "tipo": "mes_gratis",
+            "meses_gratis": 1,
+            "usos_maximos": 0,
+        },
+        {
+            "codigo": "DORA-LAUNCH",
+            "descripcion": "30% off por lanzamiento",
+            "tipo": "porcentaje",
+            "valor": 30,
+            "usos_maximos": 500,
+        },
+    ]
+
+    for datos in codigos_iniciales:
+        existente = db.query(CodigoDescuento).filter(
+            CodigoDescuento.codigo == datos["codigo"]
+        ).first()
+        if not existente:
+            db.add(CodigoDescuento(**datos))
+            logger.info(f"  + Código descuento creado: {datos['codigo']}")
+
+    db.commit()
 
 
 def _aplicar_migraciones(db):
@@ -122,6 +172,11 @@ def _aplicar_migraciones(db):
             "expo_push_token": "VARCHAR(200)",
             "trial_expira": "DATETIME",
             "trial_usado": "BOOLEAN DEFAULT FALSE",
+            "codigo_referido": "VARCHAR(20)",
+            "referido_por_id": "INTEGER",
+            "pais_codigo": "VARCHAR(5)",
+            "ultima_llamada_recibida": "DATETIME",
+            "twilio_numero_liberado": "BOOLEAN DEFAULT FALSE",
         }
 
         for col_name, col_type in nuevas_columnas.items():

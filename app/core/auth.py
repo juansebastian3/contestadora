@@ -225,11 +225,30 @@ async def registro(data: RegistroRequest, db: Session = Depends(get_db)):
         voz_polly_id="Polly.Mia",
         nombre_asistente="Dora",
     )
+    # Detectar país por teléfono
+    from app.services.geo_pricing_service import detectar_pais_por_telefono
+    nuevo.pais_codigo = detectar_pais_por_telefono(data.telefono)
+
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
 
-    logger.info(f"✅ Nuevo usuario registrado: {nuevo.nombre} ({nuevo.email})")
+    # Procesar código de referido si viene
+    if data.codigo_referido:
+        try:
+            from app.services.referidos_service import registrar_referido
+            registrar_referido(db, nuevo, data.codigo_referido)
+        except Exception as e:
+            logger.warning(f"Error procesando referido: {e}")
+
+    # Programar drip campaigns de retención
+    try:
+        from app.services.drip_campaigns_service import programar_drip_para_usuario
+        programar_drip_para_usuario(db, nuevo)
+    except Exception as e:
+        logger.warning(f"Error programando drip campaigns: {e}")
+
+    logger.info(f"✅ Nuevo usuario registrado: {nuevo.nombre} ({nuevo.email}) [país: {nuevo.pais_codigo}]")
     return _build_token_response(nuevo)
 
 

@@ -76,6 +76,20 @@ class EstadoSuscripcion(str, enum.Enum):
     RECHAZADA = "rechazada"        # Pago rechazado
 
 
+class EstadoReferido(str, enum.Enum):
+    PENDIENTE = "pendiente"        # Invitado aún no se registra
+    REGISTRADO = "registrado"      # Se registró pero no ha pagado
+    CONVERTIDO = "convertido"      # Pagó → ambos reciben 1 mes gratis
+    EXPIRADO = "expirado"          # Link expiró sin conversión
+
+
+class TipoDrip(str, enum.Enum):
+    DIA_1_ONBOARDING = "dia_1_onboarding"
+    DIA_3_RESUMEN_VALOR = "dia_3_resumen_valor"
+    DIA_7_WEEKLY_REPORT = "dia_7_weekly_report"
+    DIA_14_UPGRADE_OFFER = "dia_14_upgrade_offer"
+
+
 class TipoVoz(str, enum.Enum):
     POLLY = "polly"            # Gratuita - Amazon Polly vía Twilio
     ELEVENLABS = "elevenlabs"  # Premium - ElevenLabs
@@ -144,8 +158,18 @@ class Usuario(Base):
     calendario_auto_activar = Column(Boolean, default=False) # Activar contestadora según agenda
     calendario_modo = Column(String(30), default="solo_reuniones")  # solo_reuniones | siempre_agenda | manual
 
+    # Referidos
+    codigo_referido = Column(String(20), unique=True, nullable=True, index=True)  # Código único del usuario
+    referido_por_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)    # Quién lo invitó
+    pais_codigo = Column(String(5), nullable=True)   # ISO country code (CL, CO, AR, MX...)
+
+    # Tracking de actividad para auto-release Twilio
+    ultima_llamada_recibida = Column(DateTime, nullable=True)  # Última llamada entrante
+    twilio_numero_liberado = Column(Boolean, default=False)     # Si el número fue auto-liberado
+
     # Relaciones
     llamadas = relationship("Llamada", back_populates="usuario")
+    referidos = relationship("Referido", foreign_keys="Referido.referidor_id", back_populates="referidor")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -312,6 +336,129 @@ class Configuracion(Base):
     clave = Column(String(50), unique=True, nullable=False)
     valor = Column(Text, nullable=True)
     actualizado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: REFERIDOS (Programa de referidos)
+# ═══════════════════════════════════════════════════════════
+
+class Referido(Base):
+    __tablename__ = "referidos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    referidor_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)    # Quien invita
+    referido_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)      # Quien fue invitado (null si aún no se registra)
+    email_invitado = Column(String(150), nullable=True)                           # Email al que se envió la invitación
+    codigo = Column(String(20), unique=True, nullable=False, index=True)          # Código único de referido
+    estado = Column(String(20), default=EstadoReferido.PENDIENTE.value)
+    mes_gratis_aplicado_referidor = Column(Boolean, default=False)                # Ya se le dio el mes gratis al que invitó
+    mes_gratis_aplicado_referido = Column(Boolean, default=False)                 # Ya se le dio el mes gratis al invitado
+    creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    convertido_en = Column(DateTime, nullable=True)                               # Cuándo el invitado pagó
+
+    referidor = relationship("Usuario", foreign_keys=[referidor_id], back_populates="referidos")
+    referido = relationship("Usuario", foreign_keys=[referido_id])
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: CÓDIGOS DE DESCUENTO
+# ═══════════════════════════════════════════════════════════
+
+class CodigoDescuento(Base):
+    __tablename__ = "codigos_descuento"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    codigo = Column(String(30), unique=True, nullable=False, index=True)
+    descripcion = Column(String(200), nullable=True)
+    tipo = Column(String(20), nullable=False)           # "porcentaje" | "monto_fijo" | "mes_gratis"
+    valor = Column(Float, default=0)                     # % descuento o monto fijo
+    meses_gratis = Column(Integer, default=0)            # Para tipo "mes_gratis"
+    plan_aplicable = Column(String(20), nullable=True)   # null = todos los planes
+    usos_maximos = Column(Integer, default=0)             # 0 = ilimitado
+    usos_actuales = Column(Integer, default=0)
+    fecha_inicio = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    fecha_fin = Column(DateTime, nullable=True)
+    activo = Column(Boolean, default=True)
+    creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DescuentoAplicado(Base):
+    __tablename__ = "descuentos_aplicados"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    codigo_descuento_id = Column(Integer, ForeignKey("codigos_descuento.id"), nullable=False)
+    monto_descuento = Column(Float, default=0)
+    aplicado_en = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    usuario = relationship("Usuario")
+    codigo_descuento = relationship("CodigoDescuento")
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: DRIP CAMPAIGNS (Retention)
+# ═══════════════════════════════════════════════════════════
+
+class DripCampaignEnvio(Base):
+    __tablename__ = "drip_campaign_envios"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    tipo = Column(String(40), nullable=False)            # TipoDrip value
+    enviado = Column(Boolean, default=False)
+    fecha_programada = Column(DateTime, nullable=False)   # Cuándo debe enviarse
+    fecha_enviado = Column(DateTime, nullable=True)       # Cuándo se envió realmente
+    canal = Column(String(20), default="whatsapp")        # whatsapp | push | email
+    contenido = Column(Text, nullable=True)               # Contenido personalizado generado
+    creado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    usuario = relationship("Usuario")
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: PRECIOS POR GEOGRAFÍA (PPP)
+# ═══════════════════════════════════════════════════════════
+
+class PrecioGeografico(Base):
+    __tablename__ = "precios_geograficos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pais_codigo = Column(String(5), nullable=False, index=True)    # CL, CO, AR, MX, PE...
+    pais_nombre = Column(String(60), nullable=False)
+    moneda = Column(String(5), nullable=False)                      # CLP, COP, ARS, MXN, PEN, USD
+    # Precios por plan (mensuales en moneda local)
+    precio_basico_mensual = Column(Float, nullable=False)
+    precio_pro_mensual = Column(Float, nullable=False)
+    precio_premium_mensual = Column(Float, nullable=False)
+    # Precios anuales (con -20% descuento)
+    precio_basico_anual = Column(Float, nullable=False)
+    precio_pro_anual = Column(Float, nullable=False)
+    precio_premium_anual = Column(Float, nullable=False)
+    # Equivalente USD para métricas internas
+    precio_basico_usd = Column(Float, nullable=False)
+    precio_pro_usd = Column(Float, nullable=False)
+    precio_premium_usd = Column(Float, nullable=False)
+    activo = Column(Boolean, default=True)
+    actualizado = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+# ═══════════════════════════════════════════════════════════
+# MODELO: LOG AUTO-RELEASE TWILIO
+# ═══════════════════════════════════════════════════════════
+
+class TwilioAutoRelease(Base):
+    __tablename__ = "twilio_auto_releases"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    numero_liberado = Column(String(20), nullable=False)
+    twilio_phone_sid = Column(String(50), nullable=True)
+    dias_inactivo = Column(Integer, nullable=False)
+    fecha_liberacion = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    reasignado = Column(Boolean, default=False)           # Si el usuario reactivó
+    fecha_reasignacion = Column(DateTime, nullable=True)
+
+    usuario = relationship("Usuario")
 
 
 # Crear tablas

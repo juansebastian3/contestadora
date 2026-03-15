@@ -13,6 +13,7 @@ class RegistroRequest(BaseModel):
     email: str = Field(..., examples=["juan@ejemplo.com"])
     telefono: str = Field(..., min_length=8, max_length=20, examples=["+56912345678"])
     password: str = Field(..., min_length=6, examples=["miPassword123"])
+    codigo_referido: Optional[str] = Field(None, examples=["DORA-ABC123"])
 
 
 class LoginRequest(BaseModel):
