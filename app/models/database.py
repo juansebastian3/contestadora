@@ -395,8 +395,8 @@ def seed_voces_y_planes(db):
         {
             "codigo": "pro",
             "nombre": "Adulto",
-            "precio_mensual_usd": 5.99,
-            "precio_anual_usd": 59.99,
+            "precio_mensual_usd": 6.99,
+            "precio_anual_usd": 69.99,
             "llamadas_mes": 300,
             "minutos_mes": 600,
             "voces_polly": True, "voces_elevenlabs": False, "voz_personalizada": True,

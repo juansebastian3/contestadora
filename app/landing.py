@@ -9,7 +9,7 @@ from app.core.config import settings
 def render_landing_html() -> str:
     """Genera la landing page de marketing optimizada para SEO, UX y UI."""
     base_url = settings.BASE_URL
-    planes_url = f"{base_url}/suscripcion/planes"
+    planes_url = "/suscripcion/planes"
 
     return f"""<!DOCTYPE html>
 <html lang="es">

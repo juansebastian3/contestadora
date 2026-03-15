@@ -38,7 +38,7 @@ const PLANES = [
     key: "pro",
     nombre: "Pro",
     subtitulo: "Adulto",
-    precio: "$5.99/mes",
+    precio: "$6.99/mes",
     color: colors.primary,
     destacado: true,
     descripcion:
@@ -61,7 +61,7 @@ const CROSS = { value: false };
 const TEXT = (t) => ({ value: t });
 
 const FEATURES = [
-  { label: "Precio",                     free: TEXT("$0/7d"), basico: TEXT("$4.99"),  pro: TEXT("$5.99"),  premium: TEXT("$9.99") },
+  { label: "Precio",                     free: TEXT("$0/7d"), basico: TEXT("$4.99"),  pro: TEXT("$6.99"),  premium: TEXT("$9.99") },
   { label: "Llamadas/mes",               free: TEXT("300"),   basico: TEXT("100"),    pro: TEXT("300"),    premium: TEXT("Ilimitadas") },
   { label: "Numero propio",              free: TEXT("Temp."), basico: CHECK,          pro: CHECK,          premium: CHECK },
   { label: "IA contesta y transcribe",   free: CHECK,         basico: CHECK,          pro: CHECK,          premium: CHECK },

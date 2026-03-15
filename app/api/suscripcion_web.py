@@ -34,6 +34,13 @@ async def pagina_planes():
     return HTMLResponse(content=html)
 
 
+@router.get("/auth/crear-cuenta", response_class=HTMLResponse)
+async def pagina_registro():
+    """Página web pública para crear una cuenta nueva."""
+    html = _render_registro_html()
+    return HTMLResponse(content=html)
+
+
 # ═══════════════════════════════════════════════════════════
 # CHECKOUT: CREAR PAGO Y REDIRIGIR A MERCADOPAGO
 # ═══════════════════════════════════════════════════════════
@@ -189,7 +196,7 @@ async def estado_suscripcion(
             "fecha_inicio": suscripcion_activa.fecha_inicio.isoformat() if suscripcion_activa.fecha_inicio else None,
             "fecha_fin": suscripcion_activa.fecha_fin.isoformat() if suscripcion_activa.fecha_fin else None,
         } if suscripcion_activa else None,
-        "url_planes": f"{settings.BASE_URL}/suscripcion/planes",
+        "url_planes": "/suscripcion/planes",
     }
 
 
@@ -238,8 +245,6 @@ async def webhook_mercadopago(
 
 def _render_planes_html() -> str:
     """Genera la landing page de planes con checkout integrado."""
-    base_url = settings.BASE_URL
-    use_sandbox = settings.MERCADOPAGO_SANDBOX
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -317,6 +322,7 @@ def _render_planes_html() -> str:
             <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password">
             <button class="btn-login" onclick="iniciarSesion()">Iniciar Sesion</button>
             <p id="login-error" class="error" style="display:none;"></p>
+            <p style="color: #64748b; margin-top: 12px; font-size: 0.85rem;">No tienes cuenta? <a href="/auth/crear-cuenta" style="color: #6366f1; text-decoration: none; font-weight: 600;">Crear cuenta</a></p>
         </div>
         <div id="logged-info" style="display:none; text-align:center;">
             <p class="logged-in" id="user-name"></p>
@@ -351,7 +357,7 @@ def _render_planes_html() -> str:
         <div class="plan-card destacado">
             <div class="plan-subtitle">Adulto</div>
             <div class="plan-nombre">Pro</div>
-            <div class="plan-precio" id="precio-pro">$5.99<span>/mes</span></div>
+            <div class="plan-precio" id="precio-pro">$6.99<span>/mes</span></div>
             <div class="plan-ahorro" id="ahorro-pro" style="display:none;"></div>
             <div class="plan-desc">Te llaman bastante para ofrecerte cosas, pero tienes miedo de perderte una llamada importante.</div>
             <div class="periodo-toggle">
@@ -405,12 +411,12 @@ def _render_planes_html() -> str:
     </div>
 
     <script>
-        const BASE = "{base_url}";
+        const BASE = "";
         let token = null;
         let periodos = {{ basico: "mensual", pro: "mensual", premium: "mensual" }};
         const precios = {{
             basico: {{ mensual: 4.99, anual: 49.99 }},
-            pro: {{ mensual: 5.99, anual: 59.99 }},
+            pro: {{ mensual: 6.99, anual: 69.99 }},
             premium: {{ mensual: 9.99, anual: 99.99 }}
         }};
 
@@ -549,7 +555,154 @@ def _render_resultado_html(titulo: str, mensaje: str, color: str, icono: str) ->
         <div class="icon">{svg}</div>
         <h1>{titulo}</h1>
         <p>{mensaje}</p>
-        <a href="{settings.BASE_URL}/suscripcion/planes" class="btn">Volver a planes</a>
+        <a href="/suscripcion/planes" class="btn">Volver a planes</a>
     </div>
+</body>
+</html>"""
+
+
+def _render_registro_html() -> str:
+    """Genera la página de registro de cuenta nueva."""
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ContestaDora - Crear Cuenta</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }}
+
+        .card {{ background: #1e293b; border-radius: 20px; padding: 40px 32px; max-width: 420px; width: 100%; border: 1px solid #334155; }}
+        .logo {{ text-align: center; margin-bottom: 24px; }}
+        .logo h1 {{ font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+        .logo p {{ color: #94a3b8; font-size: 0.9rem; margin-top: 4px; }}
+
+        .form-group {{ margin-bottom: 14px; }}
+        .form-group label {{ display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px; font-weight: 500; }}
+        .form-group input {{ width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }}
+        .form-group input:focus {{ border-color: #6366f1; }}
+        .form-group .hint {{ font-size: 0.75rem; color: #64748b; margin-top: 3px; }}
+
+        .btn-registro {{ width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; transition: opacity 0.2s; margin-top: 8px; }}
+        .btn-registro:hover {{ opacity: 0.9; }}
+        .btn-registro:disabled {{ opacity: 0.5; cursor: not-allowed; }}
+
+        .error {{ color: #ef4444; font-size: 0.85rem; margin-top: 8px; display: none; text-align: center; }}
+        .success {{ color: #22c55e; font-size: 0.85rem; margin-top: 8px; display: none; text-align: center; }}
+        .login-link {{ text-align: center; margin-top: 16px; font-size: 0.85rem; color: #64748b; }}
+        .login-link a {{ color: #6366f1; text-decoration: none; font-weight: 600; }}
+        .login-link a:hover {{ text-decoration: underline; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <h1><span style="font-weight:300;">Contesta</span><span style="font-weight:800;">Dora</span></h1>
+            <p>Crea tu cuenta y prueba 7 dias gratis</p>
+        </div>
+
+        <form id="registro-form" onsubmit="registrar(event)">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" placeholder="Tu nombre" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="tu@email.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="telefono">Telefono</label>
+                <input type="tel" id="telefono" placeholder="+56912345678" required autocomplete="tel">
+                <div class="hint">Incluye codigo de pais (ej: +56 para Chile)</div>
+            </div>
+            <div class="form-group">
+                <label for="password">Contrasena</label>
+                <input type="password" id="password" placeholder="Minimo 6 caracteres" required minlength="6" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="password2">Confirmar contrasena</label>
+                <input type="password" id="password2" placeholder="Repite tu contrasena" required minlength="6" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn-registro" id="btn-registro">Crear cuenta gratis</button>
+            <p id="registro-error" class="error"></p>
+            <p id="registro-success" class="success"></p>
+        </form>
+
+        <div class="login-link">
+            Ya tienes cuenta? <a href="/suscripcion/planes">Iniciar sesion</a>
+        </div>
+    </div>
+
+    <script>
+        async function registrar(e) {{
+            e.preventDefault();
+            const nombre = document.getElementById("nombre").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const telefono = document.getElementById("telefono").value.trim();
+            const password = document.getElementById("password").value;
+            const password2 = document.getElementById("password2").value;
+            const errorEl = document.getElementById("registro-error");
+            const successEl = document.getElementById("registro-success");
+            const btn = document.getElementById("btn-registro");
+
+            errorEl.style.display = "none";
+            successEl.style.display = "none";
+
+            if (password !== password2) {{
+                errorEl.textContent = "Las contrasenas no coinciden";
+                errorEl.style.display = "block";
+                return;
+            }}
+
+            if (password.length < 6) {{
+                errorEl.textContent = "La contrasena debe tener al menos 6 caracteres";
+                errorEl.style.display = "block";
+                return;
+            }}
+
+            if (!telefono.startsWith("+")) {{
+                errorEl.textContent = "El telefono debe incluir codigo de pais (ej: +56912345678)";
+                errorEl.style.display = "block";
+                return;
+            }}
+
+            btn.disabled = true;
+            btn.textContent = "Creando cuenta...";
+
+            try {{
+                const resp = await fetch("/auth/registro", {{
+                    method: "POST",
+                    headers: {{"Content-Type": "application/json"}},
+                    body: JSON.stringify({{ nombre, email, telefono, password }})
+                }});
+                const data = await resp.json();
+
+                if (!resp.ok) {{
+                    errorEl.textContent = data.detail || "Error al crear la cuenta";
+                    errorEl.style.display = "block";
+                    btn.disabled = false;
+                    btn.textContent = "Crear cuenta gratis";
+                    return;
+                }}
+
+                // Registro exitoso - guardar token y redirigir a planes
+                successEl.textContent = "Cuenta creada! Redirigiendo a planes...";
+                successEl.style.display = "block";
+
+                // Redirigir a planes con el token para que pueda suscribirse
+                setTimeout(() => {{
+                    window.location.href = "/suscripcion/planes?token=" + data.access_token;
+                }}, 1500);
+
+            }} catch (e) {{
+                errorEl.textContent = "Error de conexion. Intenta de nuevo.";
+                errorEl.style.display = "block";
+                btn.disabled = false;
+                btn.textContent = "Crear cuenta gratis";
+            }}
+        }}
+    </script>
 </body>
 </html>"""

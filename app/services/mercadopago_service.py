@@ -37,8 +37,8 @@ PLANES_CONFIG = {
     "pro": {
         "titulo": "ContestaDora Adulto — Dora la OperaDora",
         "descripcion": "Tu voz grabada + modo luna + prompt personalizado. 300 llamadas/mes.",
-        "precio_mensual": 5.99,
-        "precio_anual": 59.99,
+        "precio_mensual": 6.99,
+        "precio_anual": 69.99,
     },
     "premium": {
         "titulo": "ContestaDora Ejecutivo — Dora la AgendaDora",
